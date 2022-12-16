@@ -1,0 +1,25 @@
+.ownertag {
+  color: #fff;
+}
+
+.ownertag-list {
+  color: #fff;
+  margin-left: 5px;
+}
+
+.botText-1526X_ {
+  color: inherit;
+}
+
+[class*="ownerIcon-"][class*="icon-"] {
+  display: none;
+}
+
+/* .ownertag.botTagRegular-2HEhHi:hover,
+.ownertag-list.botTagRegular-2HEhHi:hover {
+    background-color: transparent !important;
+} */
+
+.OwnerTag-13h21hk {
+  display: inline;
+}
