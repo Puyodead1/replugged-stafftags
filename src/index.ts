@@ -1,113 +1,145 @@
 /* eslint-disable no-undefined */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { Injector, webpack } from "replugged";
-import { DEFAULT_TAG_TEXTS, Guild, GuildMember, USER_TYPES } from "./constants";
+import { Injector, settings as repluggedSettings, webpack } from "replugged";
+import { NamespacedSettings } from "replugged/dist/renderer/apis/settings";
+import {
+  DefaultSettings,
+  DEFAULT_TAG_TEXTS,
+  GetChannelFunction,
+  GetGuildFunction,
+  GetMemberModule,
+  Guild,
+  StaffTagsSettings,
+  USER_TYPES,
+} from "./constants";
 import "./style.css";
+const { Permissions } = webpack.common.constants;
+const { guilds } = webpack.common;
+const { getGuild } = guilds as { getGuild: GetGuildFunction };
 const inject = new Injector();
 
-const settings = {
-  customTextEnabled: false,
-  tagText: {
-    admin: "admin",
-    owner: "owner",
-    mod: "mod",
-    staff: "staff",
-  } as { [key: string]: string },
-};
+async function getTagText(
+  tagType: string,
+  settings: NamespacedSettings<StaffTagsSettings>,
+): Promise<string> {
+  const customTagTextEnabled = (await settings.get("customTagTextEnabled")) as boolean;
+  const tagTexts = (await settings.get("tagTexts")) as { [key: string]: string };
+  return customTagTextEnabled ? tagTexts[tagType] : DEFAULT_TAG_TEXTS[tagType];
+}
 
-function getTagText(tagType: string): string {
-  switch (tagType) {
-    case USER_TYPES.ADMIN:
-      tagType = "admin";
-      break;
-    case USER_TYPES.GOWNER:
-    case USER_TYPES.SOWNER:
-      tagType = "owner";
-      break;
-    case USER_TYPES.MOD:
-      tagType = "mod";
-      break;
-    case USER_TYPES.STAFF:
-      tagType = "staff";
-      break;
+function moduleFindFailed(moduleName: string): void {
+  console.error(`Failed to find ${moduleName} module! Cannot continue`);
+}
+
+function parseBitFieldPermissions(allowed: bigint) {
+  const permissions = {} as { [key: string]: boolean };
+  for (const perm of Object.keys(Permissions)) {
+    if (!perm.startsWith("all")) {
+      if (BigInt(allowed) & BigInt(Permissions[perm])) {
+        permissions[perm] = true;
+      }
+    }
   }
-  // const customTextEnabled = this.settings.get("customTagText", false);
-  // const tagText = this.settings.get(`${tagType}TagText`);
-  const { customTextEnabled } = settings;
-  const tagText = settings.tagText[`${tagType}TagText`];
-  return customTextEnabled ? tagText : DEFAULT_TAG_TEXTS[tagType];
+  return permissions;
+}
+
+function getPermissionsRaw(guild: Guild, userId: string, getMemberMod: GetMemberModule) {
+  let permissions = 0n;
+
+  const member = getMemberMod.getMember(guild.id, userId);
+
+  if (guild && member) {
+    if (guild.ownerId === userId) {
+      permissions = BigInt(Permissions.ADMINISTRATOR);
+    } else {
+      /* @everyone is not inlcuded in the member's roles */
+      permissions |= BigInt(guild.roles[guild.id]?.permissions);
+
+      for (const roleId of member.roles) {
+        const rolePerms = guild.roles[roleId]?.permissions;
+        if (rolePerms !== undefined) {
+          permissions |= BigInt(rolePerms);
+        }
+      }
+    }
+
+    /* If they have administrator they have every permission */
+    if (
+      (BigInt(permissions) & BigInt(Permissions.ADMINISTRATOR)) ===
+      BigInt(Permissions.ADMINISTRATOR)
+    ) {
+      return Object.values(Permissions).reduce((a, b) => BigInt(a) | BigInt(b), 0n);
+    }
+  }
+
+  return permissions;
 }
 
 export async function start(): Promise<void> {
-  const { Permissions } = webpack.common.constants;
+  const settings = repluggedSettings.get<StaffTagsSettings>("me.puyodead1.StaffTags");
 
-  const getGuildMod = (await webpack.waitForModule(
-    webpack.filters.byProps("getGuild", "getGuildCount", "getGuilds", "isLoaded"),
-  )) as {
-    getGuild: (id: string) => Guild;
-    getGuilds: () => { [key: string]: Guild };
-  };
-  const getChannelMod = (await webpack.waitForModule(webpack.filters.byProps("getChannel"))) as {
-    getChannel: (id: string) => {
-      name: string;
-    };
-  };
-  const getMemberMod = Object.values(
-    await webpack.waitForModule(webpack.filters.byProps("getMember")),
-  ).find((x) => x.getMember) as {
-    getMember: (guildId: string, memberId: string) => GuildMember;
-  } | null;
-
-  if (!getMemberMod) {
-    console.error("Failed to find getMember module! Cannot continue");
-    return;
+  // set any missing settings to default
+  for await (const [key, value] of Object.entries(DefaultSettings)) {
+    const has = await settings.has(key);
+    if (!has) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await settings.set(key, value as any);
+    }
   }
 
+  if (!getGuild) return moduleFindFailed("getGuild");
+
+  /**
+   * Get the `getChannel` function
+   */
+  const { getChannel } = await webpack.waitForModule<{
+    getChannel: GetChannelFunction;
+  }>(webpack.filters.byProps("getChannel"));
+
+  if (!getChannel) return moduleFindFailed("getChannel");
+
+  /**
+   * getMember module
+   */
+  const getMemberMod = Object.values(
+    await webpack.waitForModule(webpack.filters.byProps("getMember")),
+  ).find((x) => typeof x === "object") as GetMemberModule;
+
+  if (!getMemberMod) return moduleFindFailed("getMember");
+
+  /**
+   * Get the MessageTimestamp component
+   */
   const MessageTimestamp = webpack.getBySource(/\w+\.showTimestamp,\w+=\w+\.showTimestampOnHover/);
+  if (!MessageTimestamp) return moduleFindFailed("MessageTimestamp");
 
-  const parseBitFieldPermissions = (allowed: bigint) => {
-    const permissions = {} as { [key: string]: boolean };
-    for (const perm of Object.keys(Permissions)) {
-      if (!perm.startsWith("all")) {
-        if (BigInt(allowed) & BigInt(Permissions[perm])) {
-          permissions[perm] = true;
-        }
-      }
-    }
-    return permissions;
-  };
+  /**
+   * Get some classes
+   */
+  const botTagRegularClasses = await webpack.waitForModule<{
+    botTagRegular: string;
+    rem: string;
+  }>(webpack.filters.byProps("botTagRegular"));
+  if (!botTagRegularClasses) return moduleFindFailed("botTagRegular");
 
-  const getPermissionsRaw = (guild: Guild, userId: string) => {
-    let permissions = 0n;
+  const botTagCozyClasses = await webpack.waitForModule<{
+    botTagCozy: string;
+  }>(webpack.filters.byProps("botTagCozy"));
+  if (!botTagCozyClasses) return moduleFindFailed("botTagCozy");
 
-    const member = getMemberMod.getMember(guild.id, userId);
-
-    if (guild && member) {
-      if (guild.ownerId === userId) {
-        permissions = BigInt(Permissions.ADMINISTRATOR);
-      } else {
-        /* @everyone is not inlcuded in the member's roles */
-        permissions |= BigInt(guild.roles[guild.id]?.permissions);
-
-        for (const roleId of member.roles) {
-          const rolePerms = guild.roles[roleId]?.permissions;
-          if (rolePerms !== undefined) {
-            permissions |= BigInt(rolePerms);
-          }
-        }
-      }
-
-      /* If they have administrator they have every permission */
-      if (
-        (BigInt(permissions) & BigInt(Permissions.ADMINISTRATOR)) ===
-        BigInt(Permissions.ADMINISTRATOR)
-      ) {
-        return Object.values(Permissions).reduce((a, b) => BigInt(a) | BigInt(b), 0n);
-      }
-    }
-
-    return permissions;
-  };
+  // just some tests
+  const g = getGuild("1000926524452647132");
+  if (g) {
+    console.log("Guild", g);
+    console.log("Member", getMemberMod.getMember(g.id, "498989696412549120"));
+    console.log("Channel", getChannel("1000955966520557689"));
+    console.log("Permissions Raw", getPermissionsRaw(g, "498989696412549120", getMemberMod));
+    console.log(
+      `Permissions`,
+      parseBitFieldPermissions(getPermissionsRaw(g, "498989696412549120", getMemberMod)),
+    );
+    console.log(`getTagText`, await getTagText(USER_TYPES.MOD, settings));
+  }
 
   // if (typingMod && getChannelMod) {
   //   inject.instead(typingMod, "startTyping", ([channel]) => {
