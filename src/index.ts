@@ -15,9 +15,6 @@ import {
   USER_TYPES,
 } from "./constants";
 import "./style.css";
-const { Permissions } = webpack.common.constants;
-const { guilds } = webpack.common;
-const { getGuild } = guilds as { getGuild: GetGuildFunction };
 const inject = new Injector();
 
 function getTagText(
@@ -34,7 +31,7 @@ function moduleFindFailed(moduleName: string): void {
   console.error(`Failed to find ${moduleName} module! Cannot continue`);
 }
 
-function parseBitFieldPermissions(allowed: bigint) {
+function parseBitFieldPermissions(allowed: bigint, Permissions: Record<string, bigint>) {
   const permissions = {} as { [key: string]: boolean };
   for (const perm of Object.keys(Permissions)) {
     if (!perm.startsWith("all")) {
@@ -46,7 +43,12 @@ function parseBitFieldPermissions(allowed: bigint) {
   return permissions;
 }
 
-function getPermissionsRaw(guild: Guild, userId: string, getMemberMod: GetMemberModule) {
+function getPermissionsRaw(
+  guild: Guild,
+  userId: string,
+  getMemberMod: GetMemberModule,
+  Permissions: Record<string, bigint>,
+) {
   let permissions = 0n;
 
   const member = getMemberMod.getMember(guild.id, userId);
@@ -87,6 +89,10 @@ function getContrastYIQ(hexcolor: string) {
 }
 
 export async function start(): Promise<void> {
+  const { Permissions } = webpack.common.constants;
+  const { guilds } = webpack.common;
+  const { getGuild } = guilds as { getGuild: GetGuildFunction };
+
   const settings = repluggedSettings.get<StaffTagsSettings>("me.puyodead1.StaffTags");
 
   // set any missing settings to default
@@ -151,8 +157,8 @@ export async function start(): Promise<void> {
 
       if (guild) {
         const member = getMemberMod.getMember(guild.id, user.id);
-        const permissions = getPermissionsRaw(guild, user.id, getMemberMod);
-        const parsedPermissions = parseBitFieldPermissions(permissions);
+        const permissions = getPermissionsRaw(guild, user.id, getMemberMod, Permissions);
+        const parsedPermissions = parseBitFieldPermissions(permissions, Permissions);
 
         if (guild.ownerId === user.id) {
           // user is the guild owner
