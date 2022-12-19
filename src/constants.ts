@@ -1,130 +1,63 @@
+import { Guild, GuildMember } from "discord-types/general";
 import { Settings } from "replugged";
 
 export enum USER_TYPES {
-  NONE = "None",
-  STAFF = "Staff",
-  MOD = "Mod",
-  ADMIN = "Admin",
-  SOWNER = "Server Owner",
-  GOWNER = "Group Owner",
+  NONE = 0,
+  STAFF = 1,
+  MOD = 2,
+  ADMIN = 3,
+  SOWNER = 4,
+  GOWNER = 5,
 }
 
 export const DEFAULT_TAG_TEXTS = {
   [USER_TYPES.STAFF]: "Staff",
   [USER_TYPES.MOD]: "Mod",
   [USER_TYPES.ADMIN]: "Admin",
-  [USER_TYPES.GOWNER]: "Owner",
-  [USER_TYPES.SOWNER]: "Owner",
+  [USER_TYPES.GOWNER]: "Group Owner",
+  [USER_TYPES.SOWNER]: "Server Owner",
 } as { [key: string]: string };
 
-export interface Guild {
-  id: string;
-  name: string;
-  acronym: string;
-  description: string | null;
-  icon: string | null;
-  splash: string | null;
-  banner: string | null;
-  features: string[];
-  preferredLocale: string;
-  ownerId: string;
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  application_id: string | null;
-  roles: {
-    [key: string]: {
-      id: string;
-      name: string;
-      permissions: string;
-      mentionable: boolean;
-      position: number;
-      originalPosition: number;
-      color: number;
-      colorString: string | null;
-      hoist: boolean;
-      managed: boolean;
-      tags: object;
-      icon: string | null;
-      unicodeEmoji: string | null;
-      flags: number;
-    };
-  };
-  afkChannelId: string | null;
-  afkTimeout: number;
-  systemChannelId: string | null;
-  joinedAt: string;
-  verificationLevel: number;
-  explicitContentFilter: number;
-  defaultMessageNotifications: number;
-  mfaLevel: number;
-  vanityURLCode: string | null;
-  premiumTier: number;
-  premiumSubscriberCount: number;
-  premiumProgressBarEnabled: boolean;
-  systemChannelFlags: number;
-  discoverySplash: string | null;
-  rulesChannelId: string | null;
-  safetyAlertsChannelId: string | null;
-  publicUpdatesChannelId: string | null;
-  maxStageVideoChannelUsers: number;
-  maxVideoChannelUsers: number;
-  maxMembers: number;
-  nsfwLevel: number;
-  applicationCommandCounts: object;
-  hubType: number | null;
-}
-
-export interface GuildMember {
-  userId: string;
-  nick: string | null;
-  guildId: string;
-  avatar: string | null;
-  roles: string[];
-  colorString: string | null;
-  colorRoleId: string | null;
-  iconRoleId: string | null;
-  hoistRoleId: string | null;
-  premiumSince: string | null;
-  isPending: boolean;
-  joinedAt: string;
-  communicationDisabledUntil: string | null;
-  fullProfileLoadedTimestamp: number;
-  flags: number;
-}
+export const DEFAULT_TAG_COLORS = {
+  [USER_TYPES.STAFF]: "#C8682E",
+  [USER_TYPES.MOD]: "#8D5C51",
+  [USER_TYPES.ADMIN]: "#f04747",
+  [USER_TYPES.GOWNER]: "#ED9F1B",
+  [USER_TYPES.SOWNER]: "#ED9F1B",
+};
 
 export interface StaffTagsSettings extends Settings {
-  showOwnerTags: boolean;
-  showAdminTags: boolean;
-  showModTags: boolean;
-  showStaffTags: boolean;
-  displayInMessages: boolean;
-  displayInMemberList: boolean;
-  showCrowns: boolean;
-  showForBots: boolean;
-  customTagColorsEnabled: boolean;
-  customTagTextEnabled: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  customTagColors: any; // TODO:
+  shouldShowOwnerTags: boolean;
+  shouldShowAdminTags: boolean;
+  shouldShowModTags: boolean;
+  shouldShowStaffTags: boolean;
+  shouldDisplayInChat: boolean;
+  shouldDisplayInMemberList: boolean;
+  shouldShowCrowns: boolean;
+  shouldShowForBots: boolean;
+  useCustomTagColors: boolean;
+  useCustomTagText: boolean;
   tagTexts: { [key: string]: string };
+  tagColors: { [key: string]: string };
+  changelogLastSeen: string | null;
+  shouldResetSettings: boolean;
 }
 
 export const DefaultSettings: StaffTagsSettings = {
-  showOwnerTags: true,
-  showAdminTags: true,
-  showModTags: true,
-  showStaffTags: true,
-  displayInMessages: true,
-  displayInMemberList: true,
-  showCrowns: false,
-  showForBots: true,
-  customTagColorsEnabled: false,
-  customTagTextEnabled: false,
-  customTagColors: {}, // TODO:
-  tagTexts: {
-    STAFF: "Staff",
-    MOD: "Mod",
-    ADMIN: "Admin",
-    OWNER: "Owner",
-  },
+  shouldShowOwnerTags: true,
+  shouldShowAdminTags: true,
+  shouldShowModTags: true,
+  shouldShowStaffTags: true,
+  shouldDisplayInChat: true,
+  shouldDisplayInMemberList: true,
+  shouldShowCrowns: false,
+  shouldShowForBots: true,
+  useCustomTagColors: false,
+  useCustomTagText: false,
+  tagTexts: DEFAULT_TAG_TEXTS,
+  tagColors: DEFAULT_TAG_COLORS,
+  changelogLastSeen: null,
+  shouldResetSettings: false,
 };
 
 export type GetMemberFunction = (guildId: string, userId: string) => GuildMember | undefined;
