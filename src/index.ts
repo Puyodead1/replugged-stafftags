@@ -1,7 +1,9 @@
-/* eslint-disable no-undefined */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { Injector, settings as repluggedSettings, webpack } from "replugged";
-import { NamespacedSettings } from "replugged/dist/renderer/apis/settings";
+/* eslint-disable */
+
+import { Channel, User } from "discord-types/general";
+import { ReactElement } from "react";
+import { AnyFunction, Injector, settings as repluggedSettings, webpack } from "replugged";
+import Tag from "./Components/Tag";
 import {
   DefaultSettings,
   DEFAULT_TAG_TEXTS,
@@ -18,13 +20,14 @@ const { guilds } = webpack.common;
 const { getGuild } = guilds as { getGuild: GetGuildFunction };
 const inject = new Injector();
 
-async function getTagText(
+function getTagText(
   tagType: string,
-  settings: NamespacedSettings<StaffTagsSettings>,
-): Promise<string> {
-  const customTagTextEnabled = (await settings.get("customTagTextEnabled")) as boolean;
-  const tagTexts = (await settings.get("tagTexts")) as { [key: string]: string };
-  return customTagTextEnabled ? tagTexts[tagType] : DEFAULT_TAG_TEXTS[tagType];
+  // settings: NamespacedSettings<StaffTagsSettings>,
+): string {
+  // const customTagTextEnabled = (await settings.get("customTagTextEnabled")) as boolean;
+  // const tagTexts = (await settings.get("tagTexts")) as { [key: string]: string };
+  // return customTagTextEnabled ? tagTexts[tagType] : DEFAULT_TAG_TEXTS[tagType];
+  return DEFAULT_TAG_TEXTS[tagType];
 }
 
 function moduleFindFailed(moduleName: string): void {
@@ -75,6 +78,14 @@ function getPermissionsRaw(guild: Guild, userId: string, getMemberMod: GetMember
   return permissions;
 }
 
+function getContrastYIQ(hexcolor: string) {
+  const r = parseInt(hexcolor.substring(1, 3), 16);
+  const g = parseInt(hexcolor.substring(3, 5), 16);
+  const b = parseInt(hexcolor.substring(5, 7), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "#000000" : "#ffffff";
+}
+
 export async function start(): Promise<void> {
   const settings = repluggedSettings.get<StaffTagsSettings>("me.puyodead1.StaffTags");
 
@@ -82,7 +93,6 @@ export async function start(): Promise<void> {
   for await (const [key, value] of Object.entries(DefaultSettings)) {
     const has = await settings.has(key);
     if (!has) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await settings.set(key, value as any);
     }
   }
@@ -107,11 +117,10 @@ export async function start(): Promise<void> {
 
   if (!getMemberMod) return moduleFindFailed("getMember");
 
-  /**
-   * Get the MessageTimestamp component
-   */
-  const MessageTimestamp = webpack.getBySource(/\w+\.showTimestamp,\w+=\w+\.showTimestampOnHover/);
-  if (!MessageTimestamp) return moduleFindFailed("MessageTimestamp");
+  const tagRenderMod = await webpack.waitForModule<{ x: AnyFunction }>(
+    webpack.filters.bySource(".botTagCompact"),
+  );
+  if (!tagRenderMod) return moduleFindFailed("tagRenderMod");
 
   /**
    * Get some classes
@@ -127,26 +136,83 @@ export async function start(): Promise<void> {
   }>(webpack.filters.byProps("botTagCozy"));
   if (!botTagCozyClasses) return moduleFindFailed("botTagCozy");
 
-  // just some tests
-  const g = getGuild("1000926524452647132");
-  if (g) {
-    console.log("Guild", g);
-    console.log("Member", getMemberMod.getMember(g.id, "498989696412549120"));
-    console.log("Channel", getChannel("1000955966520557689"));
-    console.log("Permissions Raw", getPermissionsRaw(g, "498989696412549120", getMemberMod));
-    console.log(
-      `Permissions`,
-      parseBitFieldPermissions(getPermissionsRaw(g, "498989696412549120", getMemberMod)),
-    );
-    console.log(`getTagText`, await getTagText(USER_TYPES.MOD, settings));
-  }
+  if (tagRenderMod) {
+    inject.instead(tagRenderMod, "x", (args, fn) => {
+      const originalTag = fn(...args) as ReactElement;
 
-  // if (typingMod && getChannelMod) {
-  //   inject.instead(typingMod, "startTyping", ([channel]) => {
-  //     const channelObj = getChannelMod.getChannel(channel as string);
-  //     console.log(`Typing prevented! Channel: #${channelObj?.name ?? "unknown"} (${channel}).`);
-  //   });
-  // }
+      const { user, channel } = args[0] as {
+        user: User;
+        channel: Channel;
+      };
+      if (user.bot && !DefaultSettings.showForBots) return fn(...args);
+      const guild = getGuild(channel.guild_id);
+
+      const data = {} as { tagColor?: string; textColor?: string; tagText: string };
+
+      if (guild) {
+        const member = getMemberMod.getMember(guild.id, user.id);
+        const permissions = getPermissionsRaw(guild, user.id, getMemberMod);
+        const parsedPermissions = parseBitFieldPermissions(permissions);
+
+        if (guild.ownerId === user.id) {
+          // user is the guild owner
+          const tagColor = "#ED9F1B"; // TODO: settings 'ownerTagColor'
+          // TODO: setting 'useCustomColor'
+          data.tagColor = tagColor || member?.colorString;
+          data.textColor = getContrastYIQ(tagColor || member?.colorString);
+          data.tagText = getTagText(USER_TYPES.SOWNER);
+        } else if (parsedPermissions.ADMINISTRATOR) {
+          // user is an admin
+          const tagColor = "#B4B4B4"; // TODO: settings 'adminTagColor'
+          // TODO: setting 'useCustomColor'
+          data.tagColor = tagColor || member?.colorString;
+          data.textColor = getContrastYIQ(tagColor || member?.colorString);
+          data.tagText = getTagText(USER_TYPES.ADMIN);
+        } else if (
+          parsedPermissions.MANAGE_SERVER ||
+          parsedPermissions.MANAGE_CHANNELS ||
+          parsedPermissions.MANAGE_ROLES
+        ) {
+          // user is staff
+          const tagColor = "#8D5C51"; // TODO: settings 'staffTagColor'
+          // TODO: setting 'useCustomColor'
+          data.tagColor = tagColor || member?.colorString;
+          data.textColor = getContrastYIQ(tagColor || member?.colorString);
+          data.tagText = getTagText(USER_TYPES.STAFF);
+        } else if (
+          parsedPermissions.KICK_MEMBERS ||
+          parsedPermissions.BAN_MEMBERS ||
+          parsedPermissions.MANAGE_MEMBERS
+        ) {
+          // user is a mod
+          const tagColor = "#C8682E"; // TODO: settings 'modTagColor'
+          // TODO: setting 'useCustomColor'
+          data.tagColor = tagColor || member?.colorString;
+          data.textColor = getContrastYIQ(tagColor || member?.colorString);
+          data.tagText = getTagText(USER_TYPES.MOD);
+        } else {
+          return originalTag;
+        }
+      } else if (channel.type === 3 && channel.ownerId === user.id) {
+        // group owner
+        const tagColor = "#ED9F1B"; // TODO: settings 'ownerTagColor';
+        // TODO: setting 'useCustomColor'
+        data.tagColor = tagColor;
+        data.textColor = getContrastYIQ(tagColor);
+        data.tagText = getTagText(USER_TYPES.SOWNER);
+      } else {
+        return originalTag;
+      }
+
+      return Tag({
+        originalTag,
+        className: `${botTagCozyClasses.botTagCozy} ${botTagRegularClasses.botTagRegular} ${botTagRegularClasses.rem} ownertag`,
+        tagText: data.tagText,
+        tagColor: data.tagColor,
+        textColor: data.textColor,
+      });
+    });
+  }
 }
 
 export function stop(): void {
