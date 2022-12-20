@@ -96,6 +96,7 @@ function Tag(Tooltip: React.Component) {
       const { getGuild } = guilds as { getGuild: GetGuildFunction };
 
       const { user, channel } = props.args;
+      if (!user || !channel) return;
 
       // if the user is a bot, and showing bot tags is disabled, return the original tag
       if (user.bot && !allSettings.shouldShowForBots) return;
