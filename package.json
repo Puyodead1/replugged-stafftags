@@ -1,6 +1,6 @@
 {
   "name": "replugged-stafftags",
-  "version": "1.0.0-beta2",
+  "version": "1.0.0-beta3",
   "description": "Adds a tag or crown to Owners, Mods, Admins and Staff.",
   "engines": {
     "node": ">=14.0.0"
@@ -35,8 +35,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-react": "^7.31.10",
     "prettier": "^2.8.1",
-    "react": "^18.2.0",
-    "replugged": "4.0.0-beta0.16",
+    "replugged": "4.0.0-beta0.18",
     "tsx": "^3.10.3",
     "typescript": "^4.8.4"
   }

@@ -5,7 +5,6 @@ import Tag from "./Components/Tag";
 import {
   DefaultSettings,
   GetChannelFunction,
-  GetGuildFunction,
   GetMemberModule,
   StaffTagsSettings,
 } from "./constants";
@@ -17,9 +16,6 @@ function moduleFindFailed(moduleName: string): void {
 }
 
 export async function start(): Promise<void> {
-  const { guilds } = webpack.common;
-  const { getGuild } = guilds as { getGuild: GetGuildFunction };
-
   const settings = repluggedSettings.get<StaffTagsSettings>("me.puyodead1.StaffTags");
   let allSettings = await settings.all();
 
@@ -58,8 +54,6 @@ export async function start(): Promise<void> {
       await settings.delete(key);
     }
   }
-
-  if (!getGuild) return moduleFindFailed("getGuild");
 
   /**
    * Get the `getChannel` function
@@ -100,11 +94,10 @@ export async function start(): Promise<void> {
 
   if (chatTagRenderMod) {
     inject.instead(chatTagRenderMod, "x", (args, fn) => {
-      const shouldShow = allSettings.shouldDisplayInChat;
       const originalTag = fn(...args) as ReactElement;
 
       // Disable rendering custom tag if showing in chat is disabled
-      if (!shouldShow) return originalTag;
+      if (!allSettings.shouldDisplayInChat) return originalTag;
 
       const className = `${botTagCozyClasses.botTagCozy} ${botTagRegularClasses.botTagRegular} ${botTagRegularClasses.rem} ownertag`;
 

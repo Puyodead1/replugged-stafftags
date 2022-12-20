@@ -31,16 +31,17 @@ export interface StaffTagsSettings extends Settings {
   shouldShowAdminTags: boolean;
   shouldShowModTags: boolean;
   shouldShowStaffTags: boolean;
-  shouldDisplayInChat: boolean;
-  shouldDisplayInMemberList: boolean;
   shouldShowCrowns: boolean;
   shouldShowForBots: boolean;
+  shouldDisplayInChat: boolean;
+  shouldDisplayInMemberList: boolean;
   useCustomTagColors: boolean;
   useCustomTagText: boolean;
   tagTexts: { [key: string]: string };
   tagColors: { [key: string]: string };
   changelogLastSeen: string | null;
   shouldResetSettings: boolean;
+  modifyBotTagColor: boolean;
 }
 
 export const DefaultSettings: StaffTagsSettings = {
@@ -48,16 +49,17 @@ export const DefaultSettings: StaffTagsSettings = {
   shouldShowAdminTags: true,
   shouldShowModTags: true,
   shouldShowStaffTags: true,
-  shouldDisplayInChat: true,
-  shouldDisplayInMemberList: true,
   shouldShowCrowns: false,
   shouldShowForBots: true,
+  shouldDisplayInChat: true,
+  shouldDisplayInMemberList: true,
   useCustomTagColors: false,
   useCustomTagText: false,
   tagTexts: DEFAULT_TAG_TEXTS,
   tagColors: DEFAULT_TAG_COLORS,
   changelogLastSeen: null,
   shouldResetSettings: false,
+  modifyBotTagColor: false,
 };
 
 export type GetMemberFunction = (guildId: string, userId: string) => GuildMember | undefined;
