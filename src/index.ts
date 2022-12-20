@@ -1,22 +1,18 @@
 /* eslint-disable */
-import { ReactElement } from "react";
-import { AnyFunction, Injector, settings as repluggedSettings, webpack } from "replugged";
-import Tag from "./Components/Tag";
-import {
-  DefaultSettings,
-  GetChannelFunction,
-  GetMemberModule,
-  StaffTagsSettings,
-} from "./constants";
+import { common, Injector, settings as repluggedSettings, webpack } from "replugged";
+import { AnyFunction } from "replugged/dist/types";
+import tag from "./Components/Tag";
+import { DefaultSettings, GetChannelFunction, GetMemberModule } from "./constants";
 import "./style.css";
 const inject = new Injector();
+const { React } = common;
 
 function moduleFindFailed(moduleName: string): void {
   console.error(`Failed to find ${moduleName} module! Cannot continue`);
 }
 
 export async function start(): Promise<void> {
-  const settings = repluggedSettings.get<StaffTagsSettings>("me.puyodead1.StaffTags");
+  const settings = repluggedSettings.get("me.puyodead1.StaffTags");
   let allSettings = await settings.all();
 
   if (allSettings.shouldResetSettings) {
@@ -78,6 +74,13 @@ export async function start(): Promise<void> {
   );
   if (!chatTagRenderMod) return moduleFindFailed("tagRenderMod");
 
+  const tooltipMod = await webpack.waitForModule<Record<string, typeof React.Component>>(
+    webpack.filters.bySource(/shouldShowTooltip:!1/),
+  );
+  const Tooltip =
+    tooltipMod && webpack.getFunctionBySource<any>(/shouldShowTooltip:!1/, tooltipMod);
+  if (!Tooltip) return moduleFindFailed("Tooltip");
+
   /**
    * Get some classes
    */
@@ -92,21 +95,24 @@ export async function start(): Promise<void> {
   }>(webpack.filters.byProps("botTagCozy"));
   if (!botTagCozyClasses) return moduleFindFailed("botTagCozy");
 
+  const Tag = tag(Tooltip);
+
   if (chatTagRenderMod) {
     inject.instead(chatTagRenderMod, "x", (args, fn) => {
-      const originalTag = fn(...args) as ReactElement;
+      const originalTag = fn(...args) as React.ReactElement;
 
       // Disable rendering custom tag if showing in chat is disabled
       if (!allSettings.shouldDisplayInChat) return originalTag;
 
       const className = `${botTagCozyClasses.botTagCozy} ${botTagRegularClasses.botTagRegular} ${botTagRegularClasses.rem} ownertag`;
 
-      return Tag({
+      return React.createElement(Tag, {
         originalTag,
         settings,
         getMemberMod,
         args: args[0],
         className,
+        Tooltip,
       });
     });
   }

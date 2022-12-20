@@ -1,6 +1,6 @@
 {
   "name": "replugged-stafftags",
-  "version": "1.0.0-beta3",
+  "version": "1.0.0-beta4",
   "description": "Adds a tag or crown to Owners, Mods, Admins and Staff.",
   "engines": {
     "node": ">=14.0.0"

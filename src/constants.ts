@@ -1,5 +1,5 @@
 import { Guild, GuildMember } from "discord-types/general";
-import { Settings } from "replugged";
+import { Settings } from "replugged/dist/types";
 
 export enum USER_TYPES {
   NONE = 0,
@@ -37,11 +37,12 @@ export interface StaffTagsSettings extends Settings {
   shouldDisplayInMemberList: boolean;
   useCustomTagColors: boolean;
   useCustomTagText: boolean;
-  tagTexts: { [key: string]: string };
-  tagColors: { [key: string]: string };
+  tagTexts: { [key: number]: string };
+  tagColors: { [key: number]: string };
   changelogLastSeen: string | null;
   shouldResetSettings: boolean;
   modifyBotTagColor: boolean;
+  useCrownGold: boolean;
 }
 
 export const DefaultSettings: StaffTagsSettings = {
@@ -60,6 +61,7 @@ export const DefaultSettings: StaffTagsSettings = {
   changelogLastSeen: null,
   shouldResetSettings: false,
   modifyBotTagColor: false,
+  useCrownGold: true,
 };
 
 export type GetMemberFunction = (guildId: string, userId: string) => GuildMember | undefined;
