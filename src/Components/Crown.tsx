@@ -5,11 +5,11 @@ const { React } = common;
 export interface CrownProps {
   text: string;
   className: string;
-  svgStyle: React.CSSProperties;
+  color: string | undefined;
 }
 
 function Crown(Tooltip: any) {
-  return ({ text, className, svgStyle }: CrownProps): React.ReactElement => {
+  return ({ text, className, color }: CrownProps): React.ReactElement => {
     return (
       <Tooltip text={text}>
         {(props: React.HTMLAttributes<any>) => {
@@ -21,7 +21,7 @@ function Crown(Tooltip: any) {
               viewBox="0 0 16 16"
               style={{
                 backgroundColor: "transparent",
-                ...svgStyle,
+                color,
               }}
               {...props}>
               <path

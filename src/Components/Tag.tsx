@@ -109,7 +109,7 @@ function Tag(Tooltip: React.Component) {
           : DEFAULT_TAG_TEXTS[tagType];
       };
 
-      let tagColor, tagType;
+      let tagColorTmp, tagTypeTmp;
 
       if (guild) {
         const member = props.getMemberMod.getMember(guild.id, user.id);
@@ -123,12 +123,12 @@ function Tag(Tooltip: React.Component) {
           if (!allSettings.shouldShowOwnerTags) return;
 
           // get the tag color from settings if custom tag colors are enabled, otherwise use the member's color
-          tagColor = allSettings.useCustomTagColors
+          tagColorTmp = allSettings.useCustomTagColors
             ? allSettings.tagColors[USER_TYPES.SOWNER]
             : member?.colorString;
 
           // update the state
-          tagType = USER_TYPES.SOWNER;
+          tagTypeTmp = USER_TYPES.SOWNER;
         } else if (parsedPermissions.ADMINISTRATOR) {
           // user is an admin
 
@@ -136,12 +136,12 @@ function Tag(Tooltip: React.Component) {
           if (!allSettings.shouldShowAdminTags) return;
 
           // get the tag color from settings if custom tag colors are enabled, otherwise use the member's color
-          tagColor = allSettings.useCustomTagColors
+          tagColorTmp = allSettings.useCustomTagColors
             ? allSettings.tagColors[USER_TYPES.ADMIN]
             : member?.colorString;
 
           // update the state
-          tagType = USER_TYPES.ADMIN;
+          tagTypeTmp = USER_TYPES.ADMIN;
         } else if (
           parsedPermissions.MANAGE_SERVER ||
           parsedPermissions.MANAGE_CHANNELS ||
@@ -153,12 +153,12 @@ function Tag(Tooltip: React.Component) {
           if (!allSettings.shouldShowStaffTags) return;
 
           // get the tag color from settings if custom tag colors are enabled, otherwise use the member's color
-          tagColor = allSettings.useCustomTagColors
+          tagColorTmp = allSettings.useCustomTagColors
             ? allSettings.tagColors[USER_TYPES.STAFF]
             : member?.colorString;
 
           // update the state
-          tagType = USER_TYPES.STAFF;
+          tagTypeTmp = USER_TYPES.STAFF;
         } else if (
           parsedPermissions.KICK_MEMBERS ||
           parsedPermissions.BAN_MEMBERS ||
@@ -170,12 +170,12 @@ function Tag(Tooltip: React.Component) {
           if (!allSettings.shouldShowModTags) return;
 
           // get the tag color from settings if custom tag colors are enabled, otherwise use the member's color
-          tagColor = allSettings.useCustomTagColors
+          tagColorTmp = allSettings.useCustomTagColors
             ? allSettings.tagColors[USER_TYPES.MOD]
             : member?.colorString;
 
           // update the state
-          tagType = USER_TYPES.MOD;
+          tagTypeTmp = USER_TYPES.MOD;
         }
       } else if (channel.type === 3 && channel.ownerId === user.id) {
         // group channel owner
@@ -184,39 +184,37 @@ function Tag(Tooltip: React.Component) {
         if (!allSettings.shouldShowOwnerTags) return;
 
         // get the tag color from settings if custom tag colors are enabled, otherwise use the member's color
-        tagColor = allSettings.useCustomTagColors
+        tagColorTmp = allSettings.useCustomTagColors
           ? allSettings.tagColors[USER_TYPES.GOWNER]
           : DEFAULT_TAG_COLORS[USER_TYPES.GOWNER];
 
         // update the state
-        tagType = USER_TYPES.GOWNER;
+        tagTypeTmp = USER_TYPES.GOWNER;
       }
 
-      if (tagType) {
-        setTagText(getTagText(tagType));
-        setTagColor(tagColor);
-        if (!tagColor && allSettings.shouldShowCrowns && allSettings.useCrownGold) {
+      if (tagTypeTmp) {
+        setTagText(getTagText(tagTypeTmp));
+        if (
+          (!tagColorTmp && allSettings.shouldShowCrowns) ||
+          (allSettings.shouldShowCrowns && allSettings.useCrownGold)
+        ) {
           setTextColor("#faa81a");
         } else {
-          setTextColor(getContrastYIQ(tagColor));
+          setTagColor(tagColorTmp);
+          setTextColor(
+            allSettings.shouldShowCrowns && tagColorTmp ? tagColorTmp : getContrastYIQ(tagColorTmp),
+          );
         }
         setShouldReturnOriginal(false);
       }
     }, [allSettings]);
 
-    if (shouldReturnOriginal || !textColor || !tagText) return props.originalTag;
+    if (shouldReturnOriginal || !tagText) return props.originalTag;
 
     return allSettings?.shouldShowCrowns ? (
       <span>
         {props.originalTag}
-        <Crown
-          text={tagText}
-          className={props.className}
-          svgStyle={{
-            backgroundColor: tagColor,
-            color: textColor,
-          }}
-        />
+        <Crown text={tagText} className={props.className} color={textColor} />
       </span>
     ) : (
       <span>
