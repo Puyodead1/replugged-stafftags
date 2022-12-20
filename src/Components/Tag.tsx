@@ -194,13 +194,13 @@ function Tag(Tooltip: React.Component) {
 
       if (tagTypeTmp) {
         setTagText(getTagText(tagTypeTmp));
+        setTagColor(tagColorTmp);
         if (
           (!tagColorTmp && allSettings.shouldShowCrowns) ||
           (allSettings.shouldShowCrowns && allSettings.useCrownGold)
         ) {
           setTextColor("#faa81a");
         } else {
-          setTagColor(tagColorTmp);
           setTextColor(
             allSettings.shouldShowCrowns && tagColorTmp ? tagColorTmp : getContrastYIQ(tagColorTmp),
           );
