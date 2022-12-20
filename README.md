@@ -1,14 +1,18 @@
 # Replugged Staff Tags
 
-Displays owner, admin, and staff tags similar to bot tags, they can appear in the member list and/or
-chat.
+Displays bot like tags in Chat and Member List indicating if a user is a Group DM or Guild Owner,
+and depending on the users permissions Admin, Mod, or Staff.
 
-Chat Preview ![Chat](https://i.imgur.com/6NwdauH.png)
+### Chat Preview
+
+![Chat](https://i.imgur.com/6NwdauH.png)
 
 ---
 
 ## Notes
 
+- Member List is not implemented.
+- Crowns are not implemented.
 - As repluged is still in a developer preview, there is no settings page. However you can edit
   settings with the API via the console.
   - You can find defaults in [constants.ts](src/constants.ts#L46).
