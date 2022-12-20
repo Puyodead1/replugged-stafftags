@@ -19,9 +19,9 @@ export const DEFAULT_TAG_TEXTS = {
 } as { [key: string]: string };
 
 export const DEFAULT_TAG_COLORS = {
-  [USER_TYPES.STAFF]: "#C8682E",
-  [USER_TYPES.MOD]: "#8D5C51",
-  [USER_TYPES.ADMIN]: "#f04747",
+  [USER_TYPES.STAFF]: "#8D5C51",
+  [USER_TYPES.MOD]: "#C8682E",
+  [USER_TYPES.ADMIN]: "#B4B4B4",
   [USER_TYPES.GOWNER]: "#ED9F1B",
   [USER_TYPES.SOWNER]: "#ED9F1B",
 };
