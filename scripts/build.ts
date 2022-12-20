@@ -146,4 +146,3 @@ if (!fs.existsSync("dist")) {
 fs.writeFileSync("dist/manifest.json", JSON.stringify(manifest));
 
 Promise.all(targets);
-
