@@ -69,10 +69,16 @@ export async function start(): Promise<void> {
 
   if (!getMemberMod) return moduleFindFailed("getMember");
 
-  const chatTagRenderMod = await webpack.waitForModule<{ x: AnyFunction }>(
+  const chatTagRenderMod = await webpack.waitForModule<{ [key: string]: AnyFunction }>(
     webpack.filters.bySource(".botTagCompact"),
   );
   if (!chatTagRenderMod) return moduleFindFailed("tagRenderMod");
+
+  const fnName = Object.entries(chatTagRenderMod).find(([_, v]) =>
+    v.toString()?.match(/isRepliedMessage/),
+  )?.[0];
+
+  if (!fnName) return moduleFindFailed("tagRenderMod fnName");
 
   const tooltipMod = await webpack.waitForModule<Record<string, typeof React.Component>>(
     webpack.filters.bySource(/shouldShowTooltip:!1/),
@@ -98,7 +104,7 @@ export async function start(): Promise<void> {
   const Tag = tag(Tooltip);
 
   if (chatTagRenderMod) {
-    inject.instead(chatTagRenderMod, "x", (args, fn) => {
+    inject.instead(chatTagRenderMod, fnName, (args, fn) => {
       const originalTag = fn(...args) as React.ReactElement;
 
       // Disable rendering custom tag if showing in chat is disabled
