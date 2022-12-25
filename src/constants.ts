@@ -1,5 +1,4 @@
 import { Guild, GuildMember } from "discord-types/general";
-import { Settings } from "replugged/dist/types";
 
 export enum USER_TYPES {
   NONE = 0,
@@ -26,7 +25,8 @@ export const DEFAULT_TAG_COLORS = {
   [USER_TYPES.SOWNER]: "#ED9F1B",
 };
 
-export interface StaffTagsSettings extends Settings {
+export interface StaffTagsSettings {
+  [key: string]: string | boolean | { [key: number]: string } | null;
   shouldShowOwnerTags: boolean;
   shouldShowAdminTags: boolean;
   shouldShowModTags: boolean;

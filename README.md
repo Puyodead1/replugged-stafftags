@@ -21,11 +21,10 @@ Crown Mode
 - As repluged is still in a developer preview, there is no settings page. However you can edit
   settings with the API via the console.
   - You can find defaults in [constants.ts](src/constants.ts#L46).
-  - Get settings: `await replugged.settings.get("me.puyodead1.StaffTags").all()`
-  - Update a setting:
-    `await replugged.settings.get("me.puyodead1.StaffTags").set("customTagColorsEnabled", true)`
-  - Reset settings:
-    `await replugged.settings.get("me.puyodead1.StaffTags").set("shouldResetSettings", true)` then
-    reload the plugin either by reloading discord or with
-    `await replugged.plugins.reload("me.puyodead1.StaffTags")`
+  - Start by initializing the settings:
+    `const stcfg = await replugged.settings.init("me.puyodead1.StaffTags")`
+  - Get settings: `stcfg.all()`
+  - Update a setting: `stcfg.set("useCustomTagColors", true)`
+  - Reset settings: `stcfg.set("shouldResetSettings", true)` then reload Discord. (note: trying to
+    reload the plugin will not work.)
   - Note that not all settings are currently implemented.

@@ -1,7 +1,8 @@
 import { Channel, Guild, User } from "discord-types/general";
 import { common } from "replugged";
-import { NamespacedSettings } from "replugged/dist/renderer/apis/settings";
+import { SettingsManager } from "replugged/dist/renderer/apis/settings";
 import {
+  DefaultSettings,
   DEFAULT_TAG_COLORS,
   DEFAULT_TAG_TEXTS,
   GetGuildFunction,
@@ -16,7 +17,7 @@ const { React } = common;
 
 interface TagProps {
   originalTag: React.ReactElement;
-  settings: NamespacedSettings<any>;
+  cfg: SettingsManager<StaffTagsSettings>;
   args: { user: User; channel: Channel };
   className: string;
   getMemberMod: GetMemberModule;
@@ -31,7 +32,14 @@ function Tag(Tooltip: React.Component) {
     const [tagColor, setTagColor] = React.useState<string | undefined>();
     const [textColor, setTextColor] = React.useState<string>();
     const [tagText, setTagText] = React.useState<string>();
-    const [allSettings, setAllSettings] = React.useState<StaffTagsSettings>();
+
+    const tagTexts = props.cfg.get("tagTexts", DefaultSettings.tagTexts);
+    const tagColors = props.cfg.get("tagColors", DefaultSettings.tagColors);
+    const useCustomTagColors = props.cfg.get(
+      "useCustomTagColors",
+      DefaultSettings.useCustomTagColors,
+    );
+    const shouldShowCrowns = props.cfg.get("shouldShowCrowns", DefaultSettings.shouldShowCrowns);
 
     const getPermissionsRaw = (
       guild: Guild,
@@ -83,12 +91,6 @@ function Tag(Tooltip: React.Component) {
     };
 
     React.useEffect(() => {
-      props.settings.all().then(setAllSettings).catch(console.error);
-    }, []);
-
-    React.useEffect(() => {
-      if (!allSettings) return;
-
       const {
         guilds,
         constants: { Permissions },
@@ -99,13 +101,14 @@ function Tag(Tooltip: React.Component) {
       if (!user || !channel) return;
 
       // if the user is a bot, and showing bot tags is disabled, return the original tag
-      if (user.bot && !allSettings.shouldShowForBots) return;
+      if (user.bot && !props.cfg.get("shouldShowForBots", DefaultSettings.shouldShowForBots))
+        return;
 
       const guild = getGuild(channel.guild_id);
 
       const getTagText = (tagType: USER_TYPES): string => {
-        return allSettings.useCustomTagText
-          ? allSettings.tagTexts[tagType]
+        return props.cfg.get("useCustomTagText", DefaultSettings.useCustomTagText)
+          ? tagTexts![tagType]
           : DEFAULT_TAG_TEXTS[tagType];
       };
 
@@ -120,12 +123,10 @@ function Tag(Tooltip: React.Component) {
           // user is the guild owner
 
           // if showing owner tags is disabled, return the original tag
-          if (!allSettings.shouldShowOwnerTags) return;
+          if (!props.cfg.get("shouldShowOwnerTags", DefaultSettings.shouldShowOwnerTags)) return;
 
           // get the tag color from settings if custom tag colors are enabled, otherwise use the member's color
-          tagColorTmp = allSettings.useCustomTagColors
-            ? allSettings.tagColors[USER_TYPES.SOWNER]
-            : member?.colorString;
+          tagColorTmp = useCustomTagColors ? tagColors![USER_TYPES.SOWNER] : member?.colorString;
 
           // update the state
           tagTypeTmp = USER_TYPES.SOWNER;
@@ -133,12 +134,10 @@ function Tag(Tooltip: React.Component) {
           // user is an admin
 
           // if showing admin tags is disabled, return the original tag
-          if (!allSettings.shouldShowAdminTags) return;
+          if (!props.cfg.get("shouldShowAdminTags", DefaultSettings.shouldShowAdminTags)) return;
 
           // get the tag color from settings if custom tag colors are enabled, otherwise use the member's color
-          tagColorTmp = allSettings.useCustomTagColors
-            ? allSettings.tagColors[USER_TYPES.ADMIN]
-            : member?.colorString;
+          tagColorTmp = useCustomTagColors ? tagColors![USER_TYPES.ADMIN] : member?.colorString;
 
           // update the state
           tagTypeTmp = USER_TYPES.ADMIN;
@@ -150,12 +149,10 @@ function Tag(Tooltip: React.Component) {
           // user is staff
 
           // if showing staff tags is disabled, return the original tag
-          if (!allSettings.shouldShowStaffTags) return;
+          if (!props.cfg.get("shouldShowStaffTags", DefaultSettings.shouldShowStaffTags)) return;
 
           // get the tag color from settings if custom tag colors are enabled, otherwise use the member's color
-          tagColorTmp = allSettings.useCustomTagColors
-            ? allSettings.tagColors[USER_TYPES.STAFF]
-            : member?.colorString;
+          tagColorTmp = useCustomTagColors ? tagColors![USER_TYPES.STAFF] : member?.colorString;
 
           // update the state
           tagTypeTmp = USER_TYPES.STAFF;
@@ -167,12 +164,10 @@ function Tag(Tooltip: React.Component) {
           // user is a mod
 
           // if showing mod tags is disabled, return the original tag
-          if (!allSettings.shouldShowModTags) return;
+          if (!props.cfg.get("shouldShowModTags", DefaultSettings.shouldShowModTags)) return;
 
           // get the tag color from settings if custom tag colors are enabled, otherwise use the member's color
-          tagColorTmp = allSettings.useCustomTagColors
-            ? allSettings.tagColors[USER_TYPES.MOD]
-            : member?.colorString;
+          tagColorTmp = useCustomTagColors ? tagColors![USER_TYPES.MOD] : member?.colorString;
 
           // update the state
           tagTypeTmp = USER_TYPES.MOD;
@@ -181,11 +176,11 @@ function Tag(Tooltip: React.Component) {
         // group channel owner
 
         // if showing owner tags is disabled, return the original tag
-        if (!allSettings.shouldShowOwnerTags) return;
+        if (!props.cfg.get("shouldShowOwnerTags", DefaultSettings.shouldShowOwnerTags)) return;
 
         // get the tag color from settings if custom tag colors are enabled, otherwise use the member's color
-        tagColorTmp = allSettings.useCustomTagColors
-          ? allSettings.tagColors[USER_TYPES.GOWNER]
+        tagColorTmp = useCustomTagColors
+          ? tagColors![USER_TYPES.GOWNER]
           : DEFAULT_TAG_COLORS[USER_TYPES.GOWNER];
 
         // update the state
@@ -196,22 +191,20 @@ function Tag(Tooltip: React.Component) {
         setTagText(getTagText(tagTypeTmp));
         setTagColor(tagColorTmp);
         if (
-          (!tagColorTmp && allSettings.shouldShowCrowns) ||
-          (allSettings.shouldShowCrowns && allSettings.useCrownGold)
+          (!tagColorTmp && shouldShowCrowns) ||
+          (shouldShowCrowns && props.cfg.get("useCrownGold", DefaultSettings.useCrownGold))
         ) {
           setTextColor("#faa81a");
         } else {
-          setTextColor(
-            allSettings.shouldShowCrowns && tagColorTmp ? tagColorTmp : getContrastYIQ(tagColorTmp),
-          );
+          setTextColor(shouldShowCrowns && tagColorTmp ? tagColorTmp : getContrastYIQ(tagColorTmp));
         }
         setShouldReturnOriginal(false);
       }
-    }, [allSettings]);
+    }, []);
 
     if (shouldReturnOriginal || !tagText) return props.originalTag;
 
-    return allSettings?.shouldShowCrowns ? (
+    return shouldShowCrowns ? (
       <span>
         {props.originalTag}
         <Crown text={tagText} className={props.className} color={textColor} />

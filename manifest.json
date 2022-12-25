@@ -7,7 +7,7 @@
     "discordID": "498989696412549120",
     "github": "Puyodead1"
   },
-  "version": "1.0.0-beta6",
+  "version": "1.0.0-beta7",
   "updater": {
     "type": "github",
     "id": "Puyodead1/replugged-stafftags"

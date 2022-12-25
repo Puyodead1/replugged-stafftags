@@ -1,8 +1,13 @@
 /* eslint-disable */
-import { common, Injector, settings as repluggedSettings, webpack } from "replugged";
+import { common, Injector, settings, webpack } from "replugged";
 import { AnyFunction } from "replugged/dist/types";
 import tag from "./Components/Tag";
-import { DefaultSettings, GetChannelFunction, GetMemberModule } from "./constants";
+import {
+  DefaultSettings,
+  GetChannelFunction,
+  GetMemberModule,
+  StaffTagsSettings,
+} from "./constants";
 import "./style.css";
 const inject = new Injector();
 const { React } = common;
@@ -12,44 +17,41 @@ function moduleFindFailed(moduleName: string): void {
 }
 
 export async function start(): Promise<void> {
-  const settings = repluggedSettings.get("me.puyodead1.StaffTags");
-  let allSettings = await settings.all();
+  const cfg = await settings.init<StaffTagsSettings>("me.puyodead1.StaffTags");
 
-  if (allSettings.shouldResetSettings) {
+  if (cfg.get("shouldResetSettings", DefaultSettings.shouldResetSettings)) {
     console.log("[StaffTags] Resetting settings");
     // clear the settings
-    for (const key of Object.keys(allSettings)) {
-      await settings.delete(key);
+    for (const key of Object.keys(cfg.all())) {
+      cfg.delete(key);
     }
-    await settings.set("shouldReset", false as any);
+    cfg.set("shouldReset", false);
   }
 
   // add any new settings
-  for await (const [key, value] of Object.entries(DefaultSettings)) {
-    const has = await settings.has(key);
-    if (!has) {
+  for (const [key, value] of Object.entries(DefaultSettings)) {
+    if (!cfg.has(key)) {
       console.log(`[StaffTags] Adding new settings ${key} with value`, value);
-      await settings.set(key, value as any);
+      cfg.set(key, value as any);
     }
   }
 
-  // // update any settings that have changed
+  // update any settings that have changed
   // for (const key of Object.keys(DefaultSettings)) {
-  //   const value = await settings.get(key);
+  //   const value = cfg.get(key);
   //   if (value !== DefaultSettings[key]) {
   //     console.log(`[StaffTags] Updating setting ${key} to`, DefaultSettings[key]);
-  //     await settings.set(key, DefaultSettings[key] as any);
+  //     cfg.set(key, DefaultSettings[key]);
   //   }
   // }
 
   // remove any settings that no longer exist
-  allSettings = await settings.all();
-  for (const key of Object.keys(allSettings)) {
-    if (!(key in DefaultSettings)) {
-      console.log(`[StaffTags] Removing setting ${key} because it no longer exists`);
-      await settings.delete(key);
-    }
-  }
+  // for (const key of Object.keys(cfg.all())) {
+  //   if (!(key in DefaultSettings)) {
+  //     console.log(`[StaffTags] Removing setting ${key} because it no longer exists`);
+  //     cfg.delete(key);
+  //   }
+  // }
 
   /**
    * Get the `getChannel` function
@@ -72,13 +74,13 @@ export async function start(): Promise<void> {
   const chatTagRenderMod = await webpack.waitForModule<{ [key: string]: AnyFunction }>(
     webpack.filters.bySource(".botTagCompact"),
   );
-  if (!chatTagRenderMod) return moduleFindFailed("tagRenderMod");
+  if (!chatTagRenderMod) return moduleFindFailed("chatTagRenderMod");
 
   const fnName = Object.entries(chatTagRenderMod).find(([_, v]) =>
     v.toString()?.match(/isRepliedMessage/),
   )?.[0];
 
-  if (!fnName) return moduleFindFailed("tagRenderMod fnName");
+  if (!fnName) return moduleFindFailed("chatTagRenderMod fnName");
 
   const tooltipMod = await webpack.waitForModule<Record<string, typeof React.Component>>(
     webpack.filters.bySource(/shouldShowTooltip:!1/),
@@ -108,13 +110,13 @@ export async function start(): Promise<void> {
       const originalTag = fn(...args) as React.ReactElement;
 
       // Disable rendering custom tag if showing in chat is disabled
-      if (!allSettings.shouldDisplayInChat) return originalTag;
+      if (!cfg.get("shouldDisplayInChat", DefaultSettings.shouldDisplayInChat)) return originalTag;
 
       const className = `${botTagCozyClasses.botTagCozy} ${botTagRegularClasses.botTagRegular} ${botTagRegularClasses.rem} ownertag`;
 
       return React.createElement(Tag, {
         originalTag,
-        settings,
+        cfg,
         getMemberMod,
         args: args[0],
         className,
