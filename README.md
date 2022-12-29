@@ -1,5 +1,10 @@
 # Replugged Staff Tags
 
+> **Warning**  
+> This branch is experimental!
+>
+> Use a different module for injection, which doesn't render into replies
+
 Displays bot like tags in Chat and Member List indicating if a user is a Group DM or Guild Owner,
 and depending on the users permissions Admin, Mod, or Staff.
 

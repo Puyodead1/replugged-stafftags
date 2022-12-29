@@ -1,4 +1,4 @@
-import { Channel, Guild, User } from "discord-types/general";
+import { Channel, Guild, Message } from "discord-types/general";
 import { common } from "replugged";
 import { SettingsManager } from "replugged/dist/renderer/apis/settings";
 import {
@@ -16,9 +16,14 @@ import crown from "./Crown";
 const { React } = common;
 
 interface TagProps {
-  originalTag: React.ReactElement;
   cfg: SettingsManager<StaffTagsSettings>;
-  args: { user: User; channel: Channel };
+  args: {
+    author: { nick: string; colorString: string | undefined };
+    channel: Channel;
+    compact: boolean;
+    decorations: { [key: number]: any[] };
+    message: Message;
+  };
   className: string;
   getMemberMod: GetMemberModule;
   Tooltip: typeof React.Component;
@@ -97,11 +102,15 @@ function Tag(Tooltip: React.Component) {
       } = common;
       const { getGuild } = guilds as { getGuild: GetGuildFunction };
 
-      const { user, channel } = props.args;
-      if (!user || !channel) return;
+      const {
+        message: { author },
+        channel,
+      } = props.args;
+      console.log(props.args);
+      if (!author || !channel) return;
 
       // if the user is a bot, and showing bot tags is disabled, return the original tag
-      if (user.bot && !props.cfg.get("shouldShowForBots", DefaultSettings.shouldShowForBots))
+      if (author.bot && !props.cfg.get("shouldShowForBots", DefaultSettings.shouldShowForBots))
         return;
 
       const guild = getGuild(channel.guild_id);
@@ -115,12 +124,13 @@ function Tag(Tooltip: React.Component) {
       let tagColorTmp, tagTypeTmp;
 
       if (guild) {
-        const member = props.getMemberMod.getMember(guild.id, user.id);
-        const permissions = getPermissionsRaw(guild, user.id, Permissions);
+        const member = props.getMemberMod.getMember(guild.id, author.id);
+        const permissions = getPermissionsRaw(guild, author.id, Permissions);
         const parsedPermissions = parseBitFieldPermissions(permissions, Permissions);
 
-        if (guild.ownerId === user.id) {
+        if (guild.ownerId === author.id) {
           // user is the guild owner
+          console.log("guild owner");
 
           // if showing owner tags is disabled, return the original tag
           if (!props.cfg.get("shouldShowOwnerTags", DefaultSettings.shouldShowOwnerTags)) return;
@@ -172,7 +182,7 @@ function Tag(Tooltip: React.Component) {
           // update the state
           tagTypeTmp = USER_TYPES.MOD;
         }
-      } else if (channel.type === 3 && channel.ownerId === user.id) {
+      } else if (channel.type === 3 && channel.ownerId === author.id) {
         // group channel owner
 
         // if showing owner tags is disabled, return the original tag
@@ -202,24 +212,18 @@ function Tag(Tooltip: React.Component) {
       }
     }, []);
 
-    if (shouldReturnOriginal || !tagText) return props.originalTag;
+    if (shouldReturnOriginal || !tagText) return null;
 
     return shouldShowCrowns ? (
-      <span>
-        {props.originalTag}
-        <Crown text={tagText} className={props.className} color={textColor} />
-      </span>
+      <Crown text={tagText} className={props.className} color={textColor} />
     ) : (
-      <span>
-        {props.originalTag}
-        <span
-          className={props.className}
-          style={{
-            backgroundColor: tagColor,
-            color: textColor,
-          }}>
-          {tagText}
-        </span>
+      <span
+        className={props.className}
+        style={{
+          backgroundColor: tagColor,
+          color: textColor,
+        }}>
+        {tagText}
       </span>
     );
   };
