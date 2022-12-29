@@ -205,12 +205,12 @@ function Tag(Tooltip: React.Component) {
     if (shouldReturnOriginal || !tagText) return props.originalTag;
 
     return shouldShowCrowns ? (
-      <span>
+      <>
         {props.originalTag}
         <Crown text={tagText} className={props.className} color={textColor} />
-      </span>
+      </>
     ) : (
-      <span>
+      <>
         {props.originalTag}
         <span
           className={props.className}
@@ -220,7 +220,7 @@ function Tag(Tooltip: React.Component) {
           }}>
           {tagText}
         </span>
-      </span>
+      </>
     );
   };
 }

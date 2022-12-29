@@ -16,6 +16,10 @@ function moduleFindFailed(moduleName: string): void {
   console.error(`Failed to find ${moduleName} module! Cannot continue`);
 }
 
+function fnKeyFindFailed(fnName: string): void {
+  console.error(`Failed to find ${fnName} function key! Cannot continue`);
+}
+
 export async function start(): Promise<void> {
   const cfg = await settings.init<StaffTagsSettings>("me.puyodead1.StaffTags");
 
@@ -68,20 +72,22 @@ export async function start(): Promise<void> {
   const getMemberMod = Object.values(
     await webpack.waitForModule(webpack.filters.byProps("getMember")),
   ).find((x) => typeof x === "object") as GetMemberModule;
-
   if (!getMemberMod) return moduleFindFailed("getMember");
 
+  /**
+   * Get the module that renders bot tags in chat
+   */
   const chatTagRenderMod = await webpack.waitForModule<{ [key: string]: AnyFunction }>(
     webpack.filters.bySource(".botTagCompact"),
   );
   if (!chatTagRenderMod) return moduleFindFailed("chatTagRenderMod");
 
-  const fnName = Object.entries(chatTagRenderMod).find(([_, v]) =>
-    v.toString()?.match(/isRepliedMessage/),
-  )?.[0];
+  const fnName = webpack.getFunctionKeyBySource(/isRepliedMessage/, chatTagRenderMod) as string;
+  if (!fnName) return fnKeyFindFailed("chatTagRenderMod");
 
-  if (!fnName) return moduleFindFailed("chatTagRenderMod fnName");
-
+  /**
+   * Get the tooltip module
+   */
   const tooltipMod = await webpack.waitForModule<Record<string, typeof React.Component>>(
     webpack.filters.bySource(/shouldShowTooltip:!1/),
   );
@@ -105,25 +111,23 @@ export async function start(): Promise<void> {
 
   const Tag = tag(Tooltip);
 
-  if (chatTagRenderMod) {
-    inject.instead(chatTagRenderMod, fnName, (args, fn) => {
-      const originalTag = fn(...args) as React.ReactElement;
+  inject.instead(chatTagRenderMod, fnName, ([args], fn) => {
+    const originalTag = fn(args) as React.ReactElement;
 
-      // Disable rendering custom tag if showing in chat is disabled
-      if (!cfg.get("shouldDisplayInChat", DefaultSettings.shouldDisplayInChat)) return originalTag;
+    // Disable rendering custom tag if showing in chat is disabled
+    if (!cfg.get("shouldDisplayInChat", DefaultSettings.shouldDisplayInChat)) return originalTag;
 
-      const className = `${botTagCozyClasses.botTagCozy} ${botTagRegularClasses.botTagRegular} ${botTagRegularClasses.rem} ownertag`;
+    const className = `${botTagCozyClasses.botTagCozy} ${botTagRegularClasses.botTagRegular} ${botTagRegularClasses.rem} ownertag`;
 
-      return React.createElement(Tag, {
-        originalTag,
-        cfg,
-        getMemberMod,
-        args: args[0],
-        className,
-        Tooltip,
-      });
+    return React.createElement(Tag, {
+      originalTag,
+      cfg,
+      getMemberMod,
+      args: args,
+      className,
+      Tooltip,
     });
-  }
+  });
 }
 
 export function stop(): void {
