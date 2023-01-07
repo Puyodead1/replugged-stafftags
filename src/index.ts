@@ -1,30 +1,25 @@
 /* eslint-disable */
-import { common, Injector, settings, webpack } from "replugged";
+import { common, Injector, Logger, settings, webpack } from "replugged";
 import { AnyFunction } from "replugged/dist/types";
-import tag from "./Components/Tag";
-import {
-  DefaultSettings,
-  GetChannelFunction,
-  GetMemberModule,
-  StaffTagsSettings,
-} from "./constants";
+import Tag from "./Components/Tag";
+import { DefaultSettings, GetMemberModule, StaffTagsSettings } from "./constants";
 import "./style.css";
+
 const inject = new Injector();
 const { React } = common;
+const logger = Logger.plugin("StaffTags");
 
-function moduleFindFailed(moduleName: string): void {
-  console.error(`Failed to find ${moduleName} module! Cannot continue`);
-}
+const moduleFindFailed = (moduleName: string): void =>
+  logger.error(`Failed to find ${moduleName} module! Cannot continue`);
 
-function fnKeyFindFailed(fnName: string): void {
-  console.error(`Failed to find ${fnName} function key! Cannot continue`);
-}
+const fnKeyFindFailed = (fnName: string): void =>
+  logger.error(`Failed to find ${fnName} function key! Cannot continue`);
 
 export async function start(): Promise<void> {
   const cfg = await settings.init<StaffTagsSettings>("me.puyodead1.StaffTags");
 
   if (cfg.get("shouldResetSettings", DefaultSettings.shouldResetSettings)) {
-    console.log("[StaffTags] Resetting settings");
+    logger.log("Resetting settings");
     // clear the settings
     for (const key of Object.keys(cfg.all())) {
       cfg.delete(key);
@@ -35,7 +30,7 @@ export async function start(): Promise<void> {
   // add any new settings
   for (const [key, value] of Object.entries(DefaultSettings)) {
     if (!cfg.has(key)) {
-      console.log(`[StaffTags] Adding new settings ${key} with value`, value);
+      logger.log(`Adding new settings ${key} with value`, value);
       cfg.set(key, value as any);
     }
   }
@@ -44,7 +39,7 @@ export async function start(): Promise<void> {
   // for (const key of Object.keys(DefaultSettings)) {
   //   const value = cfg.get(key);
   //   if (value !== DefaultSettings[key]) {
-  //     console.log(`[StaffTags] Updating setting ${key} to`, DefaultSettings[key]);
+  //     console.log(`Updating setting ${key} to`, DefaultSettings[key]);
   //     cfg.set(key, DefaultSettings[key]);
   //   }
   // }
@@ -52,19 +47,10 @@ export async function start(): Promise<void> {
   // remove any settings that no longer exist
   // for (const key of Object.keys(cfg.all())) {
   //   if (!(key in DefaultSettings)) {
-  //     console.log(`[StaffTags] Removing setting ${key} because it no longer exists`);
+  //     console.log(`Removing setting ${key} because it no longer exists`);
   //     cfg.delete(key);
   //   }
   // }
-
-  /**
-   * Get the `getChannel` function
-   */
-  const { getChannel } = await webpack.waitForModule<{
-    getChannel: GetChannelFunction;
-  }>(webpack.filters.byProps("getChannel"));
-
-  if (!getChannel) return moduleFindFailed("getChannel");
 
   /**
    * getMember module
@@ -86,16 +72,6 @@ export async function start(): Promise<void> {
   if (!fnName) return fnKeyFindFailed("chatTagRenderMod");
 
   /**
-   * Get the tooltip module
-   */
-  const tooltipMod = await webpack.waitForModule<Record<string, typeof React.Component>>(
-    webpack.filters.bySource(/shouldShowTooltip:!1/),
-  );
-  const Tooltip =
-    tooltipMod && webpack.getFunctionBySource<any>(/shouldShowTooltip:!1/, tooltipMod);
-  if (!Tooltip) return moduleFindFailed("Tooltip");
-
-  /**
    * Get some classes
    */
   const botTagRegularClasses = await webpack.waitForModule<{
@@ -108,8 +84,6 @@ export async function start(): Promise<void> {
     botTagCozy: string;
   }>(webpack.filters.byProps("botTagCozy"));
   if (!botTagCozyClasses) return moduleFindFailed("botTagCozy");
-
-  const Tag = tag(Tooltip);
 
   inject.instead(chatTagRenderMod, fnName, ([args], fn) => {
     const originalTag = fn(args) as React.ReactElement;
@@ -125,7 +99,6 @@ export async function start(): Promise<void> {
       getMemberMod,
       args: args,
       className,
-      Tooltip,
     });
   });
 }

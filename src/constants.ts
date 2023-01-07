@@ -65,11 +65,6 @@ export const DefaultSettings: StaffTagsSettings = {
 };
 
 export type GetMemberFunction = (guildId: string, userId: string) => GuildMember | undefined;
-export type GetChannelFunction = (id: string) =>
-  | {
-      name: string;
-    }
-  | undefined;
 export type GetGuildFunction = (id: string) => Guild | undefined;
 export type GetGuildsFunction = () => { [key: string]: Guild };
 
