@@ -24,7 +24,7 @@ export async function start(): Promise<void> {
     for (const key of Object.keys(cfg.all())) {
       cfg.delete(key);
     }
-    cfg.set("shouldReset", false);
+    cfg.set("shouldResetSettings", false);
   }
 
   // add any new settings
