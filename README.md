@@ -18,13 +18,5 @@ Crown Mode
 ## Notes
 
 - Member List is not implemented.
-- As repluged is still in a developer preview, there is no settings page. However you can edit
-  settings with the API via the console.
-  - You can find defaults in [constants.ts](src/constants.ts#L46).
-  - Start by initializing the settings:
-    `const stcfg = await replugged.settings.init("me.puyodead1.StaffTags")`
-  - Get settings: `stcfg.all()`
-  - Update a setting: `stcfg.set("useCustomTagColors", true)`
-  - Reset settings: `stcfg.set("shouldResetSettings", true)` then reload Discord. (note: trying to
-    reload the plugin will not work.)
-  - Note that not all settings are currently implemented.
+- Not all settings are available in the UI, however, you can change them with the console:
+  `await replugged.settings.init("me.puyodead1.StaffTags").set("useCustomTagColors", true)`
