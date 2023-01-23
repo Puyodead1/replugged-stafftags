@@ -25,9 +25,14 @@ export const DEFAULT_TAG_COLORS = {
   [USER_TYPES.SOWNER]: "#ED9F1B",
 };
 
-export interface StaffTagsSettings {
-  [key: string]: string | boolean | { [key: number]: string } | null;
-  shouldShowOwnerTags: boolean;
+export const DEFAULT_TAG_PERMISSIONS = {
+  [USER_TYPES.STAFF]: [],
+  [USER_TYPES.MOD]: [],
+};
+
+export interface Settings {
+  shouldShowServerOwnerTags: boolean;
+  shouldShowGroupOwnerTags: boolean;
   shouldShowAdminTags: boolean;
   shouldShowModTags: boolean;
   shouldShowStaffTags: boolean;
@@ -37,16 +42,19 @@ export interface StaffTagsSettings {
   shouldDisplayInMemberList: boolean;
   useCustomTagColors: boolean;
   useCustomTagText: boolean;
+  useCustomTagPermissions: boolean;
   tagTexts: { [key: number]: string };
   tagColors: { [key: number]: string };
+  tagPermissions: { [key: number]: unknown[] };
   changelogLastSeen: string | null;
   shouldResetSettings: boolean;
   modifyBotTagColor: boolean;
   useCrownGold: boolean;
 }
 
-export const DefaultSettings: StaffTagsSettings = {
-  shouldShowOwnerTags: true,
+export const DefaultSettings: Settings = {
+  shouldShowServerOwnerTags: true,
+  shouldShowGroupOwnerTags: true,
   shouldShowAdminTags: true,
   shouldShowModTags: true,
   shouldShowStaffTags: true,
@@ -56,8 +64,10 @@ export const DefaultSettings: StaffTagsSettings = {
   shouldDisplayInMemberList: true,
   useCustomTagColors: false,
   useCustomTagText: false,
+  useCustomTagPermissions: false,
   tagTexts: DEFAULT_TAG_TEXTS,
   tagColors: DEFAULT_TAG_COLORS,
+  tagPermissions: DEFAULT_TAG_PERMISSIONS,
   changelogLastSeen: null,
   shouldResetSettings: false,
   modifyBotTagColor: false,

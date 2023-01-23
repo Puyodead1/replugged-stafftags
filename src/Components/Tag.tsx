@@ -1,13 +1,12 @@
 import { Channel, Guild, User } from "discord-types/general";
 import { common } from "replugged";
-import { SettingsManager } from "replugged/dist/renderer/apis/settings";
+import { cfg } from "..";
 import {
   DefaultSettings,
   DEFAULT_TAG_COLORS,
   DEFAULT_TAG_TEXTS,
   GetGuildFunction,
   GetMemberModule,
-  StaffTagsSettings,
   USER_TYPES,
 } from "../constants";
 import { getContrastYIQ } from "../utils";
@@ -17,7 +16,6 @@ const { React } = common;
 
 interface TagProps {
   originalTag: React.ReactElement;
-  cfg: SettingsManager<StaffTagsSettings>;
   args: { user: User; channel: Channel };
   className: string;
   getMemberMod: GetMemberModule;
@@ -29,13 +27,10 @@ function Tag(props: TagProps) {
   const [textColor, setTextColor] = React.useState<string>();
   const [tagText, setTagText] = React.useState<string>();
 
-  const tagTexts = props.cfg.get("tagTexts", DefaultSettings.tagTexts);
-  const tagColors = props.cfg.get("tagColors", DefaultSettings.tagColors);
-  const useCustomTagColors = props.cfg.get(
-    "useCustomTagColors",
-    DefaultSettings.useCustomTagColors,
-  );
-  const shouldShowCrowns = props.cfg.get("shouldShowCrowns", DefaultSettings.shouldShowCrowns);
+  const tagTexts = cfg.get("tagTexts", DefaultSettings.tagTexts);
+  const tagColors = cfg.get("tagColors", DefaultSettings.tagColors);
+  const useCustomTagColors = cfg.get("useCustomTagColors", DefaultSettings.useCustomTagColors);
+  const shouldShowCrowns = cfg.get("shouldShowCrowns", DefaultSettings.shouldShowCrowns);
 
   const getPermissionsRaw = (
     guild: Guild,
@@ -97,12 +92,12 @@ function Tag(props: TagProps) {
     if (!user || !channel) return;
 
     // if the user is a bot, and showing bot tags is disabled, return the original tag
-    if (user.bot && !props.cfg.get("shouldShowForBots", DefaultSettings.shouldShowForBots)) return;
+    if (user.bot && !cfg.get("shouldShowForBots", DefaultSettings.shouldShowForBots)) return;
 
     const guild = getGuild(channel.guild_id);
 
     const getTagText = (tagType: USER_TYPES): string => {
-      return props.cfg.get("useCustomTagText", DefaultSettings.useCustomTagText)
+      return cfg.get("useCustomTagText", DefaultSettings.useCustomTagText)
         ? tagTexts![tagType]
         : DEFAULT_TAG_TEXTS[tagType];
     };
@@ -118,7 +113,8 @@ function Tag(props: TagProps) {
         // user is the guild owner
 
         // if showing owner tags is disabled, return the original tag
-        if (!props.cfg.get("shouldShowOwnerTags", DefaultSettings.shouldShowOwnerTags)) return;
+        if (!cfg.get("shouldShowServerOwnerTags", DefaultSettings.shouldShowServerOwnerTags))
+          return;
 
         // get the tag color from settings if custom tag colors are enabled, otherwise use the member's color
         tagColorTmp = useCustomTagColors ? tagColors![USER_TYPES.SOWNER] : member?.colorString;
@@ -129,7 +125,7 @@ function Tag(props: TagProps) {
         // user is an admin
 
         // if showing admin tags is disabled, return the original tag
-        if (!props.cfg.get("shouldShowAdminTags", DefaultSettings.shouldShowAdminTags)) return;
+        if (!cfg.get("shouldShowAdminTags", DefaultSettings.shouldShowAdminTags)) return;
 
         // get the tag color from settings if custom tag colors are enabled, otherwise use the member's color
         tagColorTmp = useCustomTagColors ? tagColors![USER_TYPES.ADMIN] : member?.colorString;
@@ -144,7 +140,7 @@ function Tag(props: TagProps) {
         // user is staff
 
         // if showing staff tags is disabled, return the original tag
-        if (!props.cfg.get("shouldShowStaffTags", DefaultSettings.shouldShowStaffTags)) return;
+        if (!cfg.get("shouldShowStaffTags", DefaultSettings.shouldShowStaffTags)) return;
 
         // get the tag color from settings if custom tag colors are enabled, otherwise use the member's color
         tagColorTmp = useCustomTagColors ? tagColors![USER_TYPES.STAFF] : member?.colorString;
@@ -159,7 +155,7 @@ function Tag(props: TagProps) {
         // user is a mod
 
         // if showing mod tags is disabled, return the original tag
-        if (!props.cfg.get("shouldShowModTags", DefaultSettings.shouldShowModTags)) return;
+        if (!cfg.get("shouldShowModTags", DefaultSettings.shouldShowModTags)) return;
 
         // get the tag color from settings if custom tag colors are enabled, otherwise use the member's color
         tagColorTmp = useCustomTagColors ? tagColors![USER_TYPES.MOD] : member?.colorString;
@@ -171,7 +167,7 @@ function Tag(props: TagProps) {
       // group channel owner
 
       // if showing owner tags is disabled, return the original tag
-      if (!props.cfg.get("shouldShowOwnerTags", DefaultSettings.shouldShowOwnerTags)) return;
+      if (!cfg.get("shouldShowGroupOwnerTags", DefaultSettings.shouldShowGroupOwnerTags)) return;
 
       // get the tag color from settings if custom tag colors are enabled, otherwise use the member's color
       tagColorTmp = useCustomTagColors
@@ -185,9 +181,12 @@ function Tag(props: TagProps) {
     if (tagTypeTmp) {
       setTagText(getTagText(tagTypeTmp));
       setTagColor(tagColorTmp);
+
       if (
+        // if there's no tag color and showing crowns is enabled
         (!tagColorTmp && shouldShowCrowns) ||
-        (shouldShowCrowns && props.cfg.get("useCrownGold", DefaultSettings.useCrownGold))
+        // or if there's a tag color and showing crowns is enabled and using crown gold is enabled
+        (shouldShowCrowns && cfg.get("useCrownGold", DefaultSettings.useCrownGold))
       ) {
         setTextColor("#faa81a");
       } else {

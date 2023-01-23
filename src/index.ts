@@ -1,56 +1,23 @@
-/* eslint-disable */
-import { common, Injector, Logger, settings, webpack } from "replugged";
+import { common, Injector, settings, webpack } from "replugged";
 import { AnyFunction } from "replugged/dist/types";
 import Tag from "./Components/Tag";
-import { DefaultSettings, GetMemberModule, StaffTagsSettings } from "./constants";
+import { DefaultSettings, GetMemberModule, Settings } from "./constants";
 import "./style.css";
+import { addNewSettings, fnKeyFindFailed, moduleFindFailed, resetSettings } from "./utils";
 
 const inject = new Injector();
 const { React } = common;
-const logger = Logger.plugin("StaffTags");
 
-const moduleFindFailed = (moduleName: string): void =>
-  logger.error(`Failed to find ${moduleName} module! Cannot continue`);
-
-const fnKeyFindFailed = (fnName: string): void =>
-  logger.error(`Failed to find ${fnName} function key! Cannot continue`);
+export const cfg = await settings.init<Settings, keyof typeof DefaultSettings>(
+  "me.puyodead1.StaffTags",
+  DefaultSettings,
+);
 
 export async function start(): Promise<void> {
-  const cfg = await settings.init<StaffTagsSettings>("me.puyodead1.StaffTags");
-
-  if (cfg.get("shouldResetSettings", DefaultSettings.shouldResetSettings)) {
-    logger.log("Resetting settings");
-    // clear the settings
-    for (const key of Object.keys(cfg.all())) {
-      cfg.delete(key);
-    }
-    cfg.set("shouldResetSettings", false);
-  }
+  if (cfg.get("shouldResetSettings", DefaultSettings.shouldResetSettings)) resetSettings();
 
   // add any new settings
-  for (const [key, value] of Object.entries(DefaultSettings)) {
-    if (!cfg.has(key)) {
-      logger.log(`Adding new settings ${key} with value`, value);
-      cfg.set(key, value as any);
-    }
-  }
-
-  // update any settings that have changed
-  // for (const key of Object.keys(DefaultSettings)) {
-  //   const value = cfg.get(key);
-  //   if (value !== DefaultSettings[key]) {
-  //     console.log(`Updating setting ${key} to`, DefaultSettings[key]);
-  //     cfg.set(key, DefaultSettings[key]);
-  //   }
-  // }
-
-  // remove any settings that no longer exist
-  // for (const key of Object.keys(cfg.all())) {
-  //   if (!(key in DefaultSettings)) {
-  //     console.log(`Removing setting ${key} because it no longer exists`);
-  //     cfg.delete(key);
-  //   }
-  // }
+  addNewSettings();
 
   /**
    * getMember module
@@ -68,7 +35,7 @@ export async function start(): Promise<void> {
   );
   if (!chatTagRenderMod) return moduleFindFailed("chatTagRenderMod");
 
-  const fnName = webpack.getFunctionKeyBySource(/isRepliedMessage/, chatTagRenderMod) as string;
+  const fnName = webpack.getFunctionKeyBySource(/isRepliedMessage/, chatTagRenderMod)!;
   if (!fnName) return fnKeyFindFailed("chatTagRenderMod");
 
   /**
@@ -85,19 +52,18 @@ export async function start(): Promise<void> {
   }>(webpack.filters.byProps("botTagCozy"));
   if (!botTagCozyClasses) return moduleFindFailed("botTagCozy");
 
-  inject.instead(chatTagRenderMod, fnName, ([args], fn) => {
+  inject.instead(chatTagRenderMod, fnName as string, ([args], fn) => {
     const originalTag = fn(args) as React.ReactElement;
 
     // Disable rendering custom tag if showing in chat is disabled
-    if (!cfg.get("shouldDisplayInChat", DefaultSettings.shouldDisplayInChat)) return originalTag;
+    if (!cfg.get("shouldDisplayInChat")) return originalTag;
 
-    const className = `${botTagCozyClasses.botTagCozy} ${botTagRegularClasses.botTagRegular} ${botTagRegularClasses.rem} ownertag`;
+    const className = `${botTagCozyClasses.botTagCozy} ${botTagRegularClasses.botTagRegular} ${botTagRegularClasses.rem} stafftags`;
 
     return React.createElement(Tag, {
       originalTag,
-      cfg,
       getMemberMod,
-      args: args,
+      args,
       className,
     });
   });
@@ -106,3 +72,5 @@ export async function start(): Promise<void> {
 export function stop(): void {
   inject.uninjectAll();
 }
+
+export { Settings } from "./Components/Settings";
