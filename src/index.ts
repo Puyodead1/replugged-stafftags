@@ -1,4 +1,4 @@
-import { common, Injector, settings, webpack } from "replugged";
+import { Injector, common, settings, webpack } from "replugged";
 import { AnyFunction } from "replugged/dist/types";
 import Tag from "./Components/Tag";
 import { DefaultSettings, GetMemberModule, Settings } from "./constants";
