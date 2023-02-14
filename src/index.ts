@@ -1,4 +1,4 @@
-import { Injector, common, settings, webpack } from "replugged";
+import { common, Injector, settings, webpack } from "replugged";
 import { AnyFunction } from "replugged/dist/types";
 import Tag from "./Components/Tag";
 import { DefaultSettings, GetMemberModule, Settings } from "./constants";
@@ -35,7 +35,7 @@ export async function start(): Promise<void> {
   );
   if (!chatTagRenderMod) return moduleFindFailed("chatTagRenderMod");
 
-  const fnName = webpack.getFunctionKeyBySource(/isRepliedMessage/, chatTagRenderMod)!;
+  const fnName = webpack.getFunctionKeyBySource(chatTagRenderMod, /isRepliedMessage/)!;
   if (!fnName) return fnKeyFindFailed("chatTagRenderMod");
 
   /**
