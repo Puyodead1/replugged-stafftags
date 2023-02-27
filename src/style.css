@@ -1,3 +1,7 @@
 .stafftags {
   font-weight: 500 !important;
 }
+
+div[class*="repliedMessage-"] .stafftags {
+  margin-right: .25rem;
+}
