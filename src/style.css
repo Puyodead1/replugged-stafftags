@@ -2,6 +2,7 @@
   font-weight: 500 !important;
 }
 
-div[class*="repliedMessage-"] .stafftags {
+div[class*="repliedMessage-"] .stafftags,
+div[class*="threadMessageAccessory-"] .stafftags {
   margin-right: .25rem;
 }
