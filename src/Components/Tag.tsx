@@ -9,7 +9,7 @@ import {
   GetMemberModule,
   USER_TYPES,
 } from "../constants";
-import { getContrastYIQ } from "../utils";
+import { getContrastYIQ, logger } from "../utils";
 import Crown from "./Crown";
 
 const { React } = common;
@@ -90,6 +90,10 @@ function Tag(props: TagProps) {
 
     const { user, channel } = props.args;
     if (!user || !channel) return;
+    if (!Permissions) {
+      logger.warn("Permissions was undefined!");
+      return;
+    }
 
     // if the user is a bot, and showing bot tags is disabled, return the original tag
     if (user.bot && !cfg.get("shouldShowForBots", DefaultSettings.shouldShowForBots)) return;

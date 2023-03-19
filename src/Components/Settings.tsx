@@ -1,6 +1,6 @@
 import { common, components, util, webpack } from "replugged";
 import { cfg } from "..";
-import { USER_TYPES } from "../constants";
+import { DEFAULT_TAG_TEXTS, USER_TYPES } from "../constants";
 import { resetSettings } from "../utils";
 const { SwitchItem, TextInput, Button, FormItem, Divider, Text } = components;
 const { React } = common;
@@ -17,12 +17,13 @@ export function Settings() {
   const useCustomTagColors = util.useSetting(cfg, "useCustomTagColors");
   const useCustomTagPermissions = util.useSetting(cfg, "useCustomTagPermissions");
 
-  const [tagTexts, setTagTexts] = React.useState(cfg.get("tagTexts"));
+  const [tagTexts, setTagTexts] = React.useState(cfg.get("tagTexts", DEFAULT_TAG_TEXTS));
   const [canReset, setCanReset] = React.useState(true);
 
   const updateTagText = (type: USER_TYPES, text: string) => {
-    setTagTexts({ ...tagTexts, [type]: text });
-    cfg.set("tagTexts", tagTexts);
+    const newState = { ...tagTexts, [type]: text };
+    setTagTexts(newState);
+    cfg.set("tagTexts", newState);
   };
 
   return (
