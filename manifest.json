@@ -7,10 +7,10 @@
     "discordID": "498989696412549120",
     "github": "Puyodead1"
   },
-  "version": "1.0.15",
+  "version": "1.0.16",
   "updater": {
-    "type": "github",
-    "id": "Puyodead1/replugged-stafftags"
+    "type": "store",
+    "id": "me.puyodead1.StaffTags"
   },
   "license": "MIT",
   "type": "replugged-plugin",
