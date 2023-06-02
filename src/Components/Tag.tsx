@@ -15,10 +15,11 @@ import Crown from "./Crown";
 const { React } = common;
 
 interface TagProps {
-  originalTag: React.ReactElement;
+  originalTag: React.ReactElement | null;
   args: { user: User; channel: Channel };
   className: string;
   getMemberMod: GetMemberModule;
+  isMemberList?: boolean;
 }
 
 function Tag(props: TagProps) {
@@ -50,7 +51,6 @@ function Tag(props: TagProps) {
 
         for (const roleId of member.roles) {
           const rolePerms = guild.roles[roleId]?.permissions;
-          // eslint-disable-next-line no-undefined
           if (rolePerms !== undefined) {
             permissions |= BigInt(rolePerms);
           }
@@ -200,7 +200,21 @@ function Tag(props: TagProps) {
     }
   }, []);
 
-  if (shouldReturnOriginal || !tagText) return props.originalTag;
+  if (shouldReturnOriginal || !tagText) return props.isMemberList ? null : props.originalTag;
+
+  if (props.isMemberList)
+    return shouldShowCrowns ? (
+      <Crown text={tagText} className={props.className} color={textColor} />
+    ) : (
+      <span
+        className={props.className}
+        style={{
+          backgroundColor: tagColor,
+          color: textColor,
+        }}>
+        {tagText}
+      </span>
+    );
 
   return shouldShowCrowns ? (
     <>

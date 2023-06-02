@@ -1,8 +1,9 @@
-.stafftags {
+.stafftag {
   font-weight: 500 !important;
+  margin: 1px 0 0 4px !important;
 }
 
 div[class*="repliedMessage-"] .stafftags,
 div[class*="threadMessageAccessory-"] .stafftags {
-  margin-right: .25rem;
+  margin-right: 0.25rem;
 }
