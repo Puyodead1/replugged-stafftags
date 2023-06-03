@@ -17,7 +17,6 @@ Crown Mode
 
 ## Notes
 
-- Member List is not implemented.
 - Not all settings are available in the UI, however, you can change them with the console:
   `await replugged.settings.init("me.puyodead1.StaffTags").set("useCustomTagColors", true)`
 
