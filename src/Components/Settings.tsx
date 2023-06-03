@@ -62,19 +62,15 @@ export function Settings() {
         Show for Bots
       </SwitchItem>
 
-      {/* TODO: Disabled because it's currently the only option, if you don't want rendering in chat, just uninstall the plugin rofl */}
       <SwitchItem
         note="Toggle rendering tags in chat."
-        {...util.useSetting(cfg, "shouldDisplayInChat")}
-        disabled>
+        {...util.useSetting(cfg, "shouldDisplayInChat")}>
         Show in Chat
       </SwitchItem>
 
-      {/* TODO: */}
       <SwitchItem
         note="Toggle rendering tags in the member list."
-        {...util.useSetting(cfg, "shouldDisplayInMemberList")}
-        disabled>
+        {...util.useSetting(cfg, "shouldDisplayInMemberList")}>
         Show in Member List
       </SwitchItem>
 

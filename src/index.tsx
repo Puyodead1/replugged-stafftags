@@ -97,6 +97,9 @@ export async function start(): Promise<void> {
         res.type.prototype,
         "renderDecorators",
         (args, res, instance: { props?: { user: User; channel: Channel } }) => {
+          // Disable rendering custom tag if showing in member list is disabled
+          if (!cfg.get("shouldDisplayInMemberList")) return res;
+
           const user = instance?.props?.user;
           const channel = instance?.props?.channel;
           if (Array.isArray(res?.props?.children) && user && channel) {
