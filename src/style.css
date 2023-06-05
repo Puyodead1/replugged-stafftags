@@ -3,7 +3,7 @@
   margin: 1px 0 0 4px !important;
 }
 
-div[class*="repliedMessage-"] .stafftags,
-div[class*="threadMessageAccessory-"] .stafftags {
+div[class*="repliedMessage-"] .stafftag,
+div[class*="threadMessageAccessory-"] .stafftag {
   margin-right: 0.25rem;
 }
