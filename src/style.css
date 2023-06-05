@@ -5,5 +5,5 @@
 
 div[class*="repliedMessage-"] .stafftag,
 div[class*="threadMessageAccessory-"] .stafftag {
-  margin-right: 0.25rem;
+  margin-right: 0.25rem !important;
 }
