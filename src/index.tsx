@@ -45,7 +45,7 @@ export async function start(): Promise<void> {
       compare: null;
       type: AnyFunction;
     };
-  }>(webpack.filters.bySource("({canUseAvatarDecorations:"), {
+  }>(webpack.filters.bySource("({canRenderAvatarDecorations:"), {
     timeout: 10000,
   });
   if (!memberListModule) return moduleFindFailed("memberListModule");
