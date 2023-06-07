@@ -118,7 +118,7 @@ export async function start(): Promise<void> {
                 />
               </ErrorBoundary>
             );
-            res.props.children.push(a);
+            res.props.children.unshift(a);
           }
           return res;
         },
