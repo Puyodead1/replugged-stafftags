@@ -119,6 +119,7 @@ export async function start(): Promise<void> {
               </ErrorBoundary>
             );
             res.props.children.unshift(a);
+            res.props.children = res.props.children.filter(element => !element?.props?.children?.toString?.()?.includes(".ownerIcon"))
           }
           return res;
         },
