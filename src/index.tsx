@@ -31,8 +31,11 @@ export async function start(): Promise<void> {
   /**
    * Get the module that renders bot tags in chat
    */
-  const chatTagRenderMod = await webpack.waitForModule<{ [key: string]: AnyFunction }>(
-    webpack.filters.bySource(".botTagCompact"),
+  const chatTagRenderMods = webpack.getBySource<{ [key: string]: AnyFunction }>(".botTagCompact", {
+    all: true,
+  });
+  const chatTagRenderMod = chatTagRenderMods.find((x) =>
+    webpack.getFunctionKeyBySource(x, /isRepliedMessage/),
   );
   if (!chatTagRenderMod) return moduleFindFailed("chatTagRenderMod");
 
