@@ -1,10 +1,10 @@
-import { components, Injector, settings, webpack } from "replugged";
+import { Channel, User } from "discord-types/general";
+import { Injector, components, settings, webpack } from "replugged";
 import { AnyFunction, ObjectExports } from "replugged/dist/types";
 import Tag from "./Components/Tag";
 import { DefaultSettings, GetMemberModule, Settings } from "./constants";
 import "./style.css";
 import { addNewSettings, fnKeyFindFailed, logger, moduleFindFailed, resetSettings } from "./utils";
-import { Channel, User } from "discord-types/general";
 
 const inject = new Injector();
 const { ErrorBoundary } = components;
@@ -48,7 +48,7 @@ export async function start(): Promise<void> {
       compare: null;
       type: AnyFunction;
     };
-  }>(webpack.filters.bySource("({canRenderAvatarDecorations:"), {
+  }>(webpack.filters.bySource("this.renderBot()"), {
     timeout: 10000,
   });
   if (!memberListModule) return moduleFindFailed("memberListModule");

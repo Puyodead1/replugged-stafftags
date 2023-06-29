@@ -42,8 +42,8 @@ devDependencies:
     specifier: ^2.8.7
     version: 2.8.7
   replugged:
-    specifier: ^4.3.0
-    version: 4.3.0(@codemirror/view@6.7.3)(@lezer/common@1.0.2)
+    specifier: ^4.5.0
+    version: 4.5.0(@codemirror/view@6.7.3)(@lezer/common@1.0.2)
   typescript:
     specifier: ^5.0.3
     version: 5.0.3
@@ -3946,8 +3946,8 @@ packages:
       rc: 1.2.8
     dev: true
 
-  /replugged@4.3.0(@codemirror/view@6.7.3)(@lezer/common@1.0.2):
-    resolution: {integrity: sha512-Sa9O+hA5N2J7Cez2qegqW+HV8ekXxpXK1lZDCSXrp4slqHvBfUBVgySXrCvTXh2JQfl4JR6FfOf9SqfKabnb/Q==}
+  /replugged@4.5.0(@codemirror/view@6.7.3)(@lezer/common@1.0.2):
+    resolution: {integrity: sha512-Dq0PqCin7GoUcwguW9VEnrLKHPQWx68kQVdRNQ5Rm42wrY+jgHiGz0I/hqP1t5CZ4DyKmwx4cEXqsJqDPSiwVw==}
     engines: {node: '>=18.0.0', pnpm: '>=8.0.0'}
     hasBin: true
     dependencies:
