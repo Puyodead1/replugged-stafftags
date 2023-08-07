@@ -80,7 +80,7 @@ export async function start(): Promise<void> {
     const className = `${botTagCozyClasses.botTagCozy} ${botTagRegularClasses.botTagRegular} ${botTagRegularClasses.rem} stafftag`;
 
     return (
-      <ErrorBoundary>
+      <ErrorBoundary fallback={<></>}>
         <Tag
           originalTag={originalTag}
           getMemberMod={getMemberMod}
@@ -108,7 +108,7 @@ export async function start(): Promise<void> {
           if (Array.isArray(res?.props?.children) && user && channel) {
             const className = `${botTagRegularClasses.botTagRegular} ${botTagRegularClasses.rem} stafftag`;
             const a = (
-              <ErrorBoundary>
+              <ErrorBoundary fallback={<></>}>
                 <Tag
                   originalTag={null}
                   getMemberMod={getMemberMod}

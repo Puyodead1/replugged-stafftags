@@ -34,7 +34,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-react": "^7.32.2",
     "prettier": "^2.8.7",
-    "replugged": "^4.5.0",
+    "replugged": "^4.5.2",
     "typescript": "^5.0.3"
   }
 }
