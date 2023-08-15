@@ -7,7 +7,7 @@
     "discordID": "498989696412549120",
     "github": "Puyodead1"
   },
-  "version": "1.0.21",
+  "version": "1.0.22",
   "updater": {
     "type": "store",
     "id": "me.puyodead1.StaffTags"
@@ -15,5 +15,6 @@
   "license": "MIT",
   "type": "replugged-plugin",
   "renderer": "src/index.tsx",
-  "source": "https://github.com/Puyodead1/replugged-stafftags"
+  "source": "https://github.com/Puyodead1/replugged-stafftags",
+  "image": "https://i.imgur.com/dY0qE0z.png"
 }
