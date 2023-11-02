@@ -43,14 +43,14 @@ export async function start(): Promise<void> {
   if (!chatTagRenderFnName) return fnKeyFindFailed("chatTagRenderMod");
 
   const memberListMod = await webpack.waitForModule<Record<string, AnyFunction>>(
-    webpack.filters.bySource("().memberInner"),
+		webpack.filters.bySource(/innerClassName:\w+\.memberInner/),
     {
       timeout: 10000,
     },
   );
   if (!memberListMod) return moduleFindFailed("memberListModule");
 
-  const memberListFnName = webpack.getFunctionKeyBySource(memberListMod, ".isTyping")!;
+  const memberListFnName = webpack.getFunctionKeyBySource(memberListMod, "isTyping")!;
   if (!memberListFnName) return fnKeyFindFailed("memberListMod");
 
   /**
