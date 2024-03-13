@@ -1,10 +1,10 @@
-import { Channel, Guild, User } from "discord-types/general";
+import { Channel, Guild, Role, User } from "discord-types/general";
 import { common } from "replugged";
 import { cfg } from "..";
 import {
-  DefaultSettings,
   DEFAULT_TAG_COLORS,
   DEFAULT_TAG_TEXTS,
+  DefaultSettings,
   GetGuildFunction,
   GetMemberModule,
   USER_TYPES,
@@ -46,11 +46,13 @@ function Tag(props: TagProps) {
       if (guild.ownerId === userId) {
         permissions = BigInt(Permissions.ADMINISTRATOR);
       } else {
+        // @ts-expect-error types
+        const roles: { [key: string]: Role } = common.guilds.getRoles(guild.id);
         /* @everyone is not inlcuded in the member's roles */
-        permissions |= BigInt(guild.roles[guild.id]?.permissions);
+        permissions |= BigInt(roles[guild.id].permissions);
 
         for (const roleId of member.roles) {
-          const rolePerms = guild.roles[roleId]?.permissions;
+          const rolePerms = roles[roleId]?.permissions;
           if (rolePerms !== undefined) {
             permissions |= BigInt(rolePerms);
           }

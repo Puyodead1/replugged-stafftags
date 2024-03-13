@@ -4,7 +4,7 @@ import { AnyFunction, ObjectExports } from "replugged/dist/types";
 import Tag from "./Components/Tag";
 import { DefaultSettings, GetMemberModule, Settings } from "./constants";
 import "./style.css";
-import { addNewSettings, fnKeyFindFailed, logger, moduleFindFailed, resetSettings } from "./utils";
+import { addNewSettings, fnKeyFindFailed, moduleFindFailed, resetSettings } from "./utils";
 
 const inject = new Injector();
 const { ErrorBoundary } = components;
@@ -43,7 +43,7 @@ export async function start(): Promise<void> {
   if (!chatTagRenderFnName) return fnKeyFindFailed("chatTagRenderMod");
 
   const memberListMod = await webpack.waitForModule<Record<string, AnyFunction>>(
-		webpack.filters.bySource(/innerClassName:\w+\.memberInner/),
+    webpack.filters.bySource(/innerClassName:\w+\.memberInner/),
     {
       timeout: 10000,
     },
