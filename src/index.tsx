@@ -31,19 +31,16 @@ export async function start(): Promise<void> {
   /**
    * Get the module that renders bot tags in chat
    */
-  const chatTagRenderMods = webpack.getBySource<{ [key: string]: AnyFunction }>(".botTagCompact", {
-    all: true,
-  });
-  const chatTagRenderMod = chatTagRenderMods.find((x) =>
-    webpack.getFunctionKeyBySource(x, /isRepliedMessage/),
-  );
-  if (!chatTagRenderMod) return moduleFindFailed("chatTagRenderMod");
+  const chatTagRenderMod = webpack.getBySource<Record<string, AnyFunction>>(".SYSTEM_TAG=0")!;
 
-  const chatTagRenderFnName = webpack.getFunctionKeyBySource(chatTagRenderMod, /isRepliedMessage/)!;
+  const chatTagRenderFnName = webpack.getFunctionKeyBySource(
+    chatTagRenderMod,
+    "withMentionPrefix",
+  )!;
   if (!chatTagRenderFnName) return fnKeyFindFailed("chatTagRenderMod");
 
   const memberListMod = await webpack.waitForModule<Record<string, AnyFunction>>(
-    webpack.filters.bySource(/innerClassName:\w+\.memberInner/),
+    webpack.filters.bySource(".MEMBER_LIST_ITEM_AVATAR_DECORATION_PADDING)"),
     {
       timeout: 10000,
     },
@@ -68,34 +65,38 @@ export async function start(): Promise<void> {
   if (!botTagCozyClasses) return moduleFindFailed("botTagCozy");
 
   // inject into chat
-  inject.instead(chatTagRenderMod, chatTagRenderFnName, ([args], fn) => {
-    const originalTag = fn(args) as React.ReactElement;
-
+  inject.before(chatTagRenderMod, chatTagRenderFnName, (args) => {
     // Disable rendering custom tag if showing in chat is disabled
-    if (!cfg.get("shouldDisplayInChat")) return originalTag;
+    if (!cfg.get("shouldDisplayInChat")) return args;
 
-    const className = `${botTagCozyClasses.botTagCozy} ${botTagRegularClasses.botTagRegular} ${botTagRegularClasses.rem} stafftag`;
-
-    return (
-      <ErrorBoundary fallback={<></>}>
-        <Tag
-          originalTag={originalTag}
-          getMemberMod={getMemberMod}
-          args={args}
-          className={className}
-        />
-      </ErrorBoundary>
-    );
+    if (args[0].decorations?.["1"]) {
+      const className = `${botTagCozyClasses.botTagCozy} ${botTagRegularClasses.botTagRegular} ${botTagRegularClasses.rem} stafftag`;
+      const a = (
+        <ErrorBoundary fallback={<></>}>
+          <Tag
+            originalTag={null}
+            getMemberMod={getMemberMod}
+            args={{ channel: args[0].channel, user: args[0].message?.author }}
+            className={className}
+          />
+        </ErrorBoundary>
+      );
+      args[0].decorations[1].push(a);
+    }
+    return args;
   });
 
   // inject into member list
-  const unpatchMemo = inject.after(
+  inject.after(
     memberListMod,
     memberListFnName,
     ([{ user, channel }]: [{ user: User; channel: Channel }], res: React.ReactElement, _) => {
       // Disable rendering custom tag if showing in member list is disabled
       if (!cfg.get("shouldDisplayInMemberList")) return res;
-      if (Array.isArray(res?.props?.decorators?.props?.children) && user && channel) {
+      if (!res?.props?.children && typeof res?.props?.children != "function") return;
+
+      const children = res?.props?.children();
+      if (Array.isArray(children?.props?.decorators?.props?.children) && user && channel) {
         const className = `${botTagRegularClasses.botTagRegular} ${botTagRegularClasses.rem} stafftag`;
         const a = (
           <ErrorBoundary fallback={<></>}>
@@ -111,8 +112,13 @@ export async function start(): Promise<void> {
             />
           </ErrorBoundary>
         );
-        res?.props?.decorators?.props?.children.unshift(a);
+
+        children?.props?.decorators?.props?.children.unshift(a);
       }
+
+      res.props.children = () => {
+        return children;
+      };
     },
   );
 }

@@ -46,7 +46,6 @@ function Tag(props: TagProps) {
       if (guild.ownerId === userId) {
         permissions = BigInt(Permissions.ADMINISTRATOR);
       } else {
-        // @ts-expect-error types
         const roles: { [key: string]: Role } = common.guilds.getRoles(guild.id);
         /* @everyone is not inlcuded in the member's roles */
         permissions |= BigInt(roles[guild.id].permissions);
@@ -92,6 +91,7 @@ function Tag(props: TagProps) {
 
     const { user, channel } = props.args;
     if (!user || !channel) return;
+
     if (!Permissions) {
       logger.warn("Permissions was undefined!");
       return;
@@ -114,7 +114,6 @@ function Tag(props: TagProps) {
       const member = props.getMemberMod.getMember(guild.id, user.id);
       const permissions = getPermissionsRaw(guild, user.id, Permissions);
       const parsedPermissions = parseBitFieldPermissions(permissions, Permissions);
-
       if (guild.ownerId === user.id) {
         // user is the guild owner
 
@@ -198,6 +197,7 @@ function Tag(props: TagProps) {
       } else {
         setTextColor(shouldShowCrowns && tagColorTmp ? tagColorTmp : getContrastYIQ(tagColorTmp));
       }
+
       setShouldReturnOriginal(false);
     }
   }, []);
