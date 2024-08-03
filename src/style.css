@@ -1,9 +1,25 @@
 .stafftag {
   font-weight: 500 !important;
   margin: 1px 0 0 4px !important;
+  display: inline-flex;
+  flex: 0 0 auto;
+  position: relative;
+  top: 1px;
+  flex-shrink: 0;
+}
+
+span:has(> .stafftag) {
+  display: inline-flex !important;
 }
 
 div[class*="repliedMessage_"] .stafftag,
 div[class*="threadMessageAccessory_"] .stafftag {
-  margin-right: 0.25rem !important;
+  right: 0.25rem !important;
+}
+[class^="messageListItem_"] .stafftag {
+  top: 3px !important;
+}
+
+span:has(> .stafftag) + svg[class^="ownerIcon"] {
+  display: none;
 }
