@@ -19,7 +19,11 @@
     "lint:fix": "pnpm run prettier:fix && pnpm run eslint:fix"
   },
   "keywords": [],
-  "author": "Puyodead1",
+  "contributors": [
+    "Puyodead1",
+    "OIRNOIR",
+    "yofukashino"
+  ],
   "license": "MIT",
   "devDependencies": {
     "@electron/asar": "^3.2.7",
