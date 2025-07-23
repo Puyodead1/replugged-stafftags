@@ -20,6 +20,7 @@ div[class*="threadMessageAccessory_"] .stafftag {
   top: 3px !important;
 }
 
+span:has(> .stafftag) + span + svg[class^="ownerIcon"],
 span:has(> .stafftag) + svg[class^="ownerIcon"] {
   display: none;
 }

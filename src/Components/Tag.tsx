@@ -6,7 +6,7 @@ import {
   DEFAULT_TAG_TEXTS,
   DefaultSettings,
   GetGuildFunction,
-  GetMemberModule,
+  GuildMemberStoreType,
   USER_TYPES,
 } from "../constants";
 import { getContrastYIQ, logger } from "../utils";
@@ -18,7 +18,7 @@ interface TagProps {
   originalTag: React.ReactElement | null;
   args: { user: User; channel: Channel };
   className: string;
-  getMemberMod: GetMemberModule;
+  getMemberMod: GuildMemberStoreType;
   isMemberList?: boolean;
 }
 

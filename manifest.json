@@ -15,6 +15,8 @@
   "license": "MIT",
   "type": "replugged-plugin",
   "renderer": "src/index.tsx",
+  "plaintextPatches": "src/patches.ts",
+  "reloadRequired": true,
   "source": "https://github.com/Puyodead1/replugged-stafftags",
   "image": "https://i.imgur.com/dY0qE0z.png"
 }
