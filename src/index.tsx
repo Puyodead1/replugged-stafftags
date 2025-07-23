@@ -1,10 +1,11 @@
 import { Channel, User } from "discord-types/general";
-import { Injector, components, settings, webpack } from "replugged";
+import { Injector, components, plugins, settings, webpack } from "replugged";
 import { AnyFunction, ObjectExports } from "replugged/dist/types";
 import Tag from "./Components/Tag";
-import { DefaultSettings, GetMemberModule, Settings } from "./constants";
+import { DefaultSettings, GuildMemberStoreType, Settings } from "./constants";
 import "./style.css";
 import { addNewSettings, fnKeyFindFailed, moduleFindFailed, resetSettings } from "./utils";
+import ManifestJSON from "../manifest.json";
 
 const inject = new Injector();
 const { ErrorBoundary } = components;
@@ -14,20 +15,11 @@ export const cfg = await settings.init<Settings, keyof typeof DefaultSettings>(
   DefaultSettings,
 );
 
-export async function start(): Promise<void> {
-  if (cfg.get("shouldResetSettings", DefaultSettings.shouldResetSettings)) resetSettings();
-
-  // add any new settings
-  addNewSettings();
-
-  /**
-   * getMember module
-   */
-  const getMemberMod = Object.values(
-    await webpack.waitForModule<ObjectExports>(webpack.filters.byProps<string>("getMember")),
-  ).find((x) => typeof x === "object") as GetMemberModule;
-  if (!getMemberMod) return moduleFindFailed("getMember");
-
+async function getMods() {
+  const GuildMemberStore = await webpack.waitForStore<GuildMemberStoreType>("GuildMemberStore", {
+    timeout: 10000,
+  });
+  if (!GuildMemberStore) return moduleFindFailed("getMember");
   /**
    * Get the module that renders bot tags in chat
    */
@@ -38,17 +30,6 @@ export async function start(): Promise<void> {
     "withMentionPrefix",
   )!;
   if (!chatTagRenderFnName) return fnKeyFindFailed("chatTagRenderMod");
-
-  const memberListMod = await webpack.waitForModule<Record<string, AnyFunction>>(
-    webpack.filters.bySource(".MEMBER_LIST_ITEM_AVATAR_DECORATION_PADDING)"),
-    {
-      timeout: 10000,
-    },
-  );
-  if (!memberListMod) return moduleFindFailed("memberListModule");
-
-  const memberListFnName = webpack.getFunctionKeyBySource(memberListMod, "isTyping")!;
-  if (!memberListFnName) return fnKeyFindFailed("memberListMod");
 
   /**
    * Get some classes
@@ -64,6 +45,32 @@ export async function start(): Promise<void> {
   }>(webpack.filters.byProps("botTagCozy"));
   if (!botTagCozyClasses) return moduleFindFailed("botTagCozy");
 
+  return {
+    GuildMemberStore,
+    chatTagRenderMod,
+    chatTagRenderFnName,
+    botTagRegularClasses,
+    botTagCozyClasses,
+  };
+}
+
+let Mods: Awaited<ReturnType<typeof getMods>>;
+
+export async function start(): Promise<void> {
+  if (cfg.get("shouldResetSettings", DefaultSettings.shouldResetSettings)) resetSettings();
+
+  // add any new settings
+  addNewSettings();
+
+  Mods ??= await getMods();
+
+  const {
+    chatTagRenderMod,
+    chatTagRenderFnName,
+    botTagRegularClasses,
+    botTagCozyClasses,
+    GuildMemberStore,
+  } = Mods!;
   // inject into chat
   inject.before(chatTagRenderMod, chatTagRenderFnName, (args) => {
     // Disable rendering custom tag if showing in chat is disabled
@@ -75,7 +82,7 @@ export async function start(): Promise<void> {
         <ErrorBoundary fallback={<></>}>
           <Tag
             originalTag={null}
-            getMemberMod={getMemberMod}
+            getMemberMod={GuildMemberStore}
             args={{ channel: args[0].channel, user: args[0].message?.author }}
             className={className}
           />
@@ -85,42 +92,6 @@ export async function start(): Promise<void> {
     }
     return args;
   });
-
-  // inject into member list
-  inject.after(
-    memberListMod,
-    memberListFnName,
-    ([{ user, channel }]: [{ user: User; channel: Channel }], res: React.ReactElement, _) => {
-      // Disable rendering custom tag if showing in member list is disabled
-      if (!cfg.get("shouldDisplayInMemberList")) return res;
-      if (!res?.props?.children && typeof res?.props?.children != "function") return;
-
-      const children = res?.props?.children();
-      if (Array.isArray(children?.props?.decorators?.props?.children) && user && channel) {
-        const className = `${botTagRegularClasses.botTagRegular} ${botTagRegularClasses.rem} stafftag`;
-        const a = (
-          <ErrorBoundary fallback={<></>}>
-            <Tag
-              originalTag={null}
-              getMemberMod={getMemberMod}
-              args={{
-                user,
-                channel,
-              }}
-              className={className}
-              isMemberList
-            />
-          </ErrorBoundary>
-        );
-
-        children?.props?.decorators?.props?.children.unshift(a);
-      }
-
-      res.props.children = () => {
-        return children;
-      };
-    },
-  );
 }
 
 export function stop(): void {
@@ -128,3 +99,19 @@ export function stop(): void {
 }
 
 export { Settings } from "./Components/Settings";
+
+export const _renderStaffTag = ({ user, channel }: { channel: Channel; user: User }) =>
+  !plugins.getDisabled().includes(ManifestJSON.id) && user && channel && Mods ? (
+    <ErrorBoundary fallback={<></>}>
+      <Tag
+        originalTag={null}
+        getMemberMod={Mods.GuildMemberStore}
+        args={{
+          user,
+          channel,
+        }}
+        className={`${Mods.botTagRegularClasses.botTagRegular} ${Mods.botTagRegularClasses.rem} stafftag`}
+        isMemberList
+      />
+    </ErrorBoundary>
+  ) : null;

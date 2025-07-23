@@ -1,4 +1,5 @@
 import { Guild, GuildMember } from "discord-types/general";
+import { Store } from "replugged/dist/renderer/modules/common/flux";
 
 export enum USER_TYPES {
   NONE = 0,
@@ -78,6 +79,6 @@ export type GetMemberFunction = (guildId: string, userId: string) => GuildMember
 export type GetGuildFunction = (id: string) => Guild | undefined;
 export type GetGuildsFunction = () => { [key: string]: Guild };
 
-export interface GetMemberModule {
+export interface GuildMemberStoreType extends Store {
   getMember: GetMemberFunction;
 }
