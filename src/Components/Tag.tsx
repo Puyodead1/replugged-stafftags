@@ -46,7 +46,7 @@ function Tag(props: TagProps) {
       if (guild.ownerId === userId) {
         permissions = BigInt(Permissions.ADMINISTRATOR);
       } else {
-        const roles: { [key: string]: Role } = common.guilds.getRoles(guild.id);
+        const roles = common.guilds.getRolesSnapshot(guild.id);
         /* @everyone is not inlcuded in the member's roles */
         permissions |= BigInt(roles[guild.id].permissions);
 
